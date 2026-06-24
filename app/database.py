@@ -3,8 +3,17 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from .config import get_settings
 import logging
+import os
 
 logger = logging.getLogger(__name__)
+
+# Debug: show all DB-related env vars Railway provides
+for key in sorted(os.environ):
+    if any(k in key.upper() for k in ["MYSQL", "DATABASE", "DB_"]):
+        val = os.environ[key]
+        if "@" in val:
+            val = "..." + val.split("@")[-1]
+        logger.warning(f"ENV {key} = {val}")
 
 settings = get_settings()
 
