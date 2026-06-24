@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}RAREZA — Subastas de cartas{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js"></script>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#0f1115;color:#e8e6e1;font-family:'Hanken Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(200,162,74,0.32);color:#fff}
+input,select,textarea{font-family:'Hanken Grotesk',sans-serif;color-scheme:dark}
+input::placeholder,textarea::placeholder{color:#5c626b}
+a{color:inherit;text-decoration:none}
+button{font-family:'Hanken Grotesk',sans-serif}
+*::-webkit-scrollbar{height:9px;width:9px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(232,230,225,0.13);border-radius:999px}
+*::-webkit-scrollbar-thumb:hover{background:rgba(232,230,225,0.22)}
+@keyframes toastUp{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Header */
+.site-header{position:sticky;top:0;z-index:100;background:rgba(15,17,21,0.86);backdrop-filter:blur(14px);border-bottom:1px solid rgba(232,230,225,0.08)}
+.header-inner{max-width:1300px;margin:0 auto;padding:0 28px;height:68px;display:flex;align-items:center;gap:22px}
+.logo-btn{display:flex;align-items:center;gap:11px;background:none;border:none;cursor:pointer;padding:0;flex:none;text-decoration:none}
+.logo-gem{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#e0c074,#c8a24a);display:flex;align-items:center;justify-content:center;transform:rotate(45deg);box-shadow:0 4px 14px rgba(200,162,74,0.35)}
+.logo-gem span{width:11px;height:11px;background:#0f1115;border-radius:2px}
+.logo-text{display:flex;flex-direction:column;align-items:flex-start;line-height:1.05}
+.logo-name{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:0.05em;color:#e8e6e1}
+.logo-sub{font-size:8.5px;letter-spacing:0.34em;text-transform:uppercase;color:#c8a24a;font-weight:600;margin-top:2px}
+.search-form{flex:1;max-width:560px;display:flex;align-items:center;gap:10px;background:#181c23;border:1px solid rgba(232,230,225,0.1);border-radius:11px;padding:0 8px 0 14px;height:43px}
+.search-input{flex:1;background:none;border:none;outline:none;color:#e8e6e1;font-size:14px}
+.search-btn{background:linear-gradient(135deg,#e0c074,#c8a24a);color:#0f1115;border:none;border-radius:8px;padding:0 16px;height:31px;font-size:13px;font-weight:700;cursor:pointer}
+.search-btn:hover{filter:brightness(1.07)}
+.header-nav{display:flex;align-items:center;gap:6px;flex:none;margin-left:auto}
+.btn-outline{background:none;border:1px solid rgba(232,230,225,0.14);color:#e8e6e1;border-radius:10px;height:40px;padding:0 16px;font-size:13.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn-outline:hover{border-color:rgba(200,162,74,0.5);color:#e6c878}
+.btn-icon{width:40px;height:40px;border-radius:10px;background:none;border:1px solid rgba(232,230,225,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
+.btn-icon:hover{border-color:rgba(232,230,225,0.24)}
+.badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:#e0573f;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #0f1115}
+.avatar-btn{display:flex;align-items:center;gap:9px;background:none;border:1px solid rgba(232,230,225,0.1);border-radius:10px;height:40px;padding:0 12px 0 8px;cursor:pointer;text-decoration:none}
+.avatar-btn:hover{border-color:rgba(232,230,225,0.24)}
+.avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#1f2a44,#2c3a5e);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:#cdd6ea}
+.avatar-name{font-size:13.5px;font-weight:600;color:#e8e6e1}
+
+/* Buttons */
+.btn-gold{background:linear-gradient(135deg,#e0c074,#c8a24a);color:#0f1115;border:none;border-radius:11px;padding:0 24px;height:46px;font-size:15px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn-gold:hover{filter:brightness(1.07)}
+.btn-ghost-gold{background:transparent;color:#e6c878;border:1px solid rgba(200,162,74,0.5);border-radius:11px;padding:0 22px;height:46px;font-size:14.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.btn-ghost-gold:hover{background:rgba(200,162,74,0.1)}
+
+/* Cards */
+.card{background:#14181f;border:1px solid rgba(232,230,225,0.09);border-radius:14px}
+.card:hover{border-color:rgba(200,162,74,0.4)}
+
+/* Chip */
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px;white-space:nowrap}
+.chip-gold{color:#e6c878;background:rgba(200,162,74,0.12);border:1px solid rgba(200,162,74,0.3)}
+.chip-red{color:#ffb4a4;background:rgba(224,87,63,0.16);border:1px solid rgba(224,87,63,0.32)}
+.chip-green{color:#6fe0a3;background:rgba(79,180,119,0.16);border:1px solid rgba(79,180,119,0.3)}
+.chip-yellow{color:#e8c06a;background:rgba(200,162,74,0.14);border:1px solid rgba(200,162,74,0.3)}
+
+/* Pulse dot */
+.pulse{width:7px;height:7px;border-radius:50%;background:#e0573f;animation:livePulse 1.4s ease-in-out infinite;display:inline-block}
+
+/* Section heading */
+.section-title{margin:0;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#f4f2ec}
+
+/* Page */
+.page-wrap{max-width:1300px;margin:0 auto;padding:30px 28px 70px}
+
+/* Footer */
+footer{border-top:1px solid rgba(232,230,225,0.08);background:#0c0e12;margin-top:20px}
+.footer-inner{max-width:1300px;margin:0 auto;padding:40px 28px 30px;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px}
+.footer-col{display:flex;flex-direction:column;gap:11px}
+.footer-col a,.footer-col span{font-size:13px;color:#7a808a}
+.footer-col h4{font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#9aa0a8;margin:0 0 3px}
+.footer-bottom{max-width:1300px;margin:0 auto;padding:18px 28px;border-top:1px solid rgba(232,230,225,0.06);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.footer-bottom span{font-size:12.5px;color:#5c626b}
+
+/* Toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;z-index:200;display:flex;align-items:center;gap:10px;padding:13px 20px;border-radius:12px;font-size:14px;font-weight:600;color:#0f1115;box-shadow:0 16px 44px rgba(0,0,0,0.5);animation:toastUp .3s ease;max-width:90vw;white-space:nowrap}
+.toast-success{background:#e0c074}
+.toast-error{background:#e0573f}
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="logo-btn">
+      <span class="logo-gem"><span></span></span>
+      <span class="logo-text">
+        <span class="logo-name">RAREZA</span>
+        <span class="logo-sub">Subastas de cartas</span>
+      </span>
+    </a>
+
+    <form action="/search" method="get" class="search-form">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7a808a" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input name="q" value="{{ request.query_params.get('q','') }}" placeholder="Buscar cartas, sets…" class="search-input"/>
+      <button type="submit" class="search-btn">Buscar</button>
+    </form>
+
+    <nav class="header-nav">
+      {% if current_user %}
+        <a href="/sell" class="btn-outline">Vender</a>
+        <a href="/dashboard?tab=seguidas" class="btn-icon" aria-label="Seguidas">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#cfd2d6" stroke-width="2" stroke-linejoin="round"><path d="M12 20.5S3.5 15 3.5 9.2C3.5 6.3 5.7 4.5 8 4.5c1.6 0 3 .9 4 2.3 1-1.4 2.4-2.3 4-2.3 2.3 0 4.5 1.8 4.5 4.7 0 5.8-8.5 11.3-8.5 11.3z"/></svg>
+        </a>
+        <a href="/dashboard" class="avatar-btn">
+          <span class="avatar">{{ (current_user.display_name or current_user.username)[0].upper() }}</span>
+          <span class="avatar-name">Mi cuenta</span>
+        </a>
+        <form action="/api/auth/logout" method="post" style="margin:0">
+          <button type="submit" class="btn-outline" style="height:40px;font-size:13px">Salir</button>
+        </form>
+      {% else %}
+        <a href="/sell" class="btn-outline">Vender</a>
+        <a href="/auth/login" class="btn-outline">Entrar</a>
+        <a href="/auth/register" class="btn-gold" style="height:40px;font-size:13.5px;padding:0 18px;border-radius:10px">Registrarse</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+{% block content %}{% endblock %}
+
+<footer>
+  <div class="footer-inner">
+    <div style="display:flex;flex-direction:column;gap:12px;max-width:280px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#e0c074,#c8a24a);display:flex;align-items:center;justify-content:center;transform:rotate(45deg)"><span style="width:9px;height:9px;background:#0c0e12;border-radius:2px"></span></span>
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;letter-spacing:0.05em;color:#e8e6e1">RAREZA</span>
+      </div>
+      <p style="margin:0;font-size:13px;line-height:1.6;color:#7a808a">El mercado de subastas para coleccionistas de cartas en Latinoamérica.</p>
+    </div>
+    <div class="footer-col"><h4>Explorar</h4><a href="/search?game=Pokémon">Pokémon</a><a href="/search?game=Magic">Magic</a><a href="/search?game=Yu-Gi-Oh">Yu-Gi-Oh</a><a href="/search?sort=termina">Termina pronto</a></div>
+    <div class="footer-col"><h4>Vender</h4><a href="/sell">Cómo vender</a><span>Comisiones</span><span>Graduación</span></div>
+    <div class="footer-col"><h4>Ayuda</h4><span>Centro de ayuda</span><span>Envíos</span><span>Autenticidad</span></div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Rareza · Subastas de cartas coleccionables</span>
+    <span>Términos · <a href="/privacy" style="color:inherit;text-decoration:underline;text-underline-offset:3px">Privacidad</a> · Cookies</span>
+  </div>
+</footer>
+
+<div id="toast-container"></div>
+
+<script>
+function showToast(msg, type='success'){
+  const t=document.createElement('div');
+  t.className='toast toast-'+(type==='error'?'error':'success');
+  t.innerHTML=(type==='error'
+    ?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f1115" stroke-width="2.4" stroke-linecap="round"><path d="M12 8v5"/><path d="M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg>'
+    :'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f1115" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+  )+'<span>'+msg+'</span>';
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

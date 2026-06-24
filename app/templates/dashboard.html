@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+{% from "partials/auction_card.html" import auction_card %}
+{% block title %}Mi cuenta — RAREZA{% endblock %}
+
+{% block extra_head %}
+<style>
+.dash-stat{min-width:108px;background:#14181f;border:1px solid rgba(232,230,225,0.08);border-radius:13px;padding:13px 16px}
+.dash-stat .num{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700}
+.dash-stat .lbl{font-size:12px;color:#9aa0a8;margin-top:2px}
+.tab-btn{background:none;border-bottom:2px solid transparent;padding:0 2px 12px;font-size:14.5px;font-weight:600;cursor:pointer;color:#9aa0a8;display:inline-flex;align-items:center;gap:8px;font-family:'Hanken Grotesk',sans-serif}
+.tab-btn.active{color:#e8e6e1;border-color:#c8a24a}
+.tab-badge{font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;background:rgba(232,230,225,0.08);color:#9aa0a8;font-family:'Space Grotesk',sans-serif}
+.tab-btn.active .tab-badge{background:rgba(200,162,74,0.2);color:#e6c878}
+.bid-item{display:flex;align-items:center;gap:16px;background:#14181f;border:1px solid rgba(232,230,225,0.08);border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s}
+.bid-item:hover{border-color:rgba(200,162,74,0.4)}
+.won-item{display:flex;align-items:center;gap:16px;background:#14181f;border:1px solid rgba(232,230,225,0.08);border-radius:14px;padding:14px 16px}
+.thumb{border-radius:9px;border:1px solid rgba(232,230,225,0.1);flex:none}
+.watched-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(216px,1fr));gap:18px}
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:70px 20px;background:#14181f;border:1px dashed rgba(232,230,225,0.12);border-radius:16px}
+/* Settings drawer */
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
+.settings-overlay.open{opacity:1;pointer-events:all}
+.settings-drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:100vw;background:#0f1115;border-left:1px solid rgba(232,230,225,0.09);z-index:201;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column}
+.settings-drawer.open{transform:translateX(0)}
+.sett-section{background:#14181f;border:1px solid rgba(232,230,225,0.08);border-radius:14px;overflow:hidden}
+.sett-section-head{padding:14px 18px;border-bottom:1px solid rgba(232,230,225,0.07);font-family:'Space Grotesk',sans-serif;font-size:13.5px;font-weight:700;color:#e8e6e1}
+.sett-section-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+</style>
+{% endblock %}
+
+{% block content %}
+<main style="max-width:1100px;margin:0 auto;padding:32px 28px 70px">
+  <!-- User header -->
+  <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+    <span style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#1f2a44,#2c3a5e);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#cdd6ea;flex:none">{{ (current_user.display_name or current_user.username)[0].upper() }}</span>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <h1 style="margin:0;font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:#f4f2ec">Hola, {{ current_user.display_name or current_user.username }}</h1>
+      <span style="font-size:13.5px;color:#9aa0a8">Gestiona tus pujas, seguimientos y cartas ganadas</span>
+    </div>
+    <div style="display:flex;gap:12px;margin-left:auto;flex-wrap:wrap;align-items:center">
+      <div class="dash-stat"><div class="num" style="color:#e6c878">{{ active_bids_count }}</div><div class="lbl">Pujas activas</div></div>
+      <div class="dash-stat"><div class="num">{{ watched_count }}</div><div class="lbl">Siguiendo</div></div>
+      <div class="dash-stat"><div class="num" style="color:#6fe0a3">{{ won_count }}</div><div class="lbl">Ganadas</div></div>
+      <button onclick="openSettings()" title="Configuración de cuenta" style="width:44px;height:44px;border-radius:12px;border:1px solid rgba(232,230,225,0.12);background:#14181f;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9aa0a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display:flex;align-items:center;gap:26px;margin-top:26px;border-bottom:1px solid rgba(232,230,225,0.08)">
+    <a href="/dashboard?tab=pujas" class="tab-btn {{ 'active' if tab=='pujas' }}">
+      Mis pujas<span class="tab-badge">{{ active_bids_count }}</span>
+    </a>
+    <a href="/dashboard?tab=seguidas" class="tab-btn {{ 'active' if tab=='seguidas' }}">
+      Siguiendo<span class="tab-badge">{{ watched_count }}</span>
+    </a>
+    <a href="/dashboard?tab=ganadas" class="tab-btn {{ 'active' if tab=='ganadas' }}">
+      Ganadas<span class="tab-badge">{{ won_count }}</span>
+    </a>
+  </div>
+
+  <div style="margin-top:26px">
+
+    {% if tab == 'pujas' %}
+    {% if bid_items %}
+    <div style="display:flex;flex-direction:column;gap:12px">
+      {% for item in bid_items %}
+      <div class="bid-item" onclick="location.href='/auction/{{ item.auction.id }}'">
+        <div class="thumb" style="width:54px;height:70px;background:radial-gradient(120% 120% at 50% 0%,hsl({{ item.hue }} 36% 20%),hsl({{ (item.hue+20)%360 }} 30% 10%))"></div>
+        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
+          <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9aa0a8">{{ item.auction.game }}</span>
+          <span style="font-size:15px;font-weight:600;color:#e8e6e1">{{ item.auction.title }}</span>
+          <span style="font-size:12px;color:#6c727b">Termina en {{ item.ends_text }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;text-align:right;flex:none">
+          <span style="font-size:11px;color:#6c727b">Tu puja</span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;color:#e8e6e1">{{ item.my_amount }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;text-align:right;flex:none;min-width:96px">
+          <span style="font-size:11px;color:#6c727b">Puja actual</span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;color:#e6c878">{{ item.current }}</span>
+        </div>
+        {% if item.is_winning %}
+        <span class="chip chip-green" style="font-size:11px">Ganando</span>
+        {% else %}
+        <span class="chip chip-red" style="font-size:11px">Superado</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <span style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#e8e6e1">Todavía no estás pujando</span>
+      <span style="font-size:14px;color:#9aa0a8;max-width:340px">Cuando hagas tu primera puja la verás aquí con su estado en tiempo real.</span>
+      <a href="/" class="btn-gold" style="margin-top:4px;height:46px;padding:0 22px;font-size:14px;border-radius:11px">Explorar subastas</a>
+    </div>
+    {% endif %}
+
+    {% elif tab == 'seguidas' %}
+    {% if watched_cards %}
+    <div class="watched-grid">
+      {% for card in watched_cards %}
+        {{ auction_card(card, currency) }}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <span style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#e8e6e1">No sigues ninguna carta</span>
+      <span style="font-size:14px;color:#9aa0a8;max-width:340px">Toca el corazón en cualquier subasta para guardarla y seguir su precio aquí.</span>
+      <a href="/" class="btn-gold" style="margin-top:4px;height:46px;padding:0 22px;font-size:14px;border-radius:11px">Explorar subastas</a>
+    </div>
+    {% endif %}
+
+    {% elif tab == 'ganadas' %}
+    {% if won %}
+    <div style="display:flex;flex-direction:column;gap:12px">
+      {% for sale in won %}
+      <div class="won-item">
+        <div class="thumb" style="width:54px;height:70px;background:radial-gradient(120% 120% at 50% 0%,hsl({{ sale.auction.hue }} 36% 20%),hsl({{ (sale.auction.hue+20)%360 }} 30% 10%))"></div>
+        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
+          <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9aa0a8">{{ sale.auction.game }} · {{ sale.auction.grade or 'Sin graduar' }}</span>
+          <span style="font-size:15px;font-weight:600;color:#e8e6e1">{{ sale.auction.title }}</span>
+          <span style="font-size:12px;color:#6c727b">Ganada el {{ sale.sale_date.strftime('%d %b') if sale.sale_date else '—' }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;text-align:right;flex:none">
+          <span style="font-size:11px;color:#6c727b">Precio final</span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:#e6c878">{{ fmt_price(sale.final_price, currency) }}</span>
+        </div>
+        {% if sale.status == 'enviado' %}
+        <span class="chip chip-green" style="font-size:11px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6fe0a3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          Enviado
+        </span>
+        {% elif sale.status == 'envio' %}
+        <span class="chip chip-yellow" style="font-size:11px">Pendiente de envío</span>
+        {% else %}
+        <button class="btn-gold" style="height:40px;padding:0 18px;font-size:13.5px;border-radius:10px">Pagar ahora</button>
+        {% endif %}
+        <button onclick="openChat({{ sale.id }},'{{ sale.auction.title | e }}','{{ sale.seller.display_name or sale.seller.username | e }}')" title="Chatear con {{ sale.seller.display_name or sale.seller.username }}" style="width:40px;height:40px;border-radius:10px;border:1px solid rgba(200,162,74,0.3);background:rgba(200,162,74,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,background .15s" onmouseenter="this.style.borderColor='rgba(200,162,74,0.6)';this.style.background='rgba(200,162,74,0.16)'" onmouseleave="this.style.borderColor='rgba(200,162,74,0.3)';this.style.background='rgba(200,162,74,0.08)'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a24a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <span style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#e8e6e1">Aún no has ganado cartas</span>
+      <span style="font-size:14px;color:#9aa0a8;max-width:340px">Tus subastas ganadas aparecerán aquí listas para pagar y enviar.</span>
+    </div>
+    {% endif %}
+    {% endif %}
+
+  </div>
+</main>
+
+{% include "partials/chat_drawer.html" %}
+
+<!-- Settings overlay + drawer -->
+<div class="settings-overlay" id="sett-overlay" onclick="closeSettings()"></div>
+<aside class="settings-drawer" id="sett-drawer">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid rgba(232,230,225,0.08);flex:none">
+    <span style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#f4f2ec">Configuración</span>
+    <button onclick="closeSettings()" style="width:36px;height:36px;border-radius:9px;border:1px solid rgba(232,230,225,0.12);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa0a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <div style="padding:22px;display:flex;flex-direction:column;gap:20px;flex:1">
+
+    <!-- Perfil -->
+    <div class="sett-section">
+      <div class="sett-section-head">Tu perfil</div>
+      <div class="sett-section-body">
+        <div class="form-field">
+          <label class="form-label">Nombre visible</label>
+          <input class="form-input" id="sett-name" value="{{ current_user.display_name or '' }}" placeholder="{{ current_user.username }}">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="sett-email" type="email" value="{{ current_user.email }}">
+        </div>
+        <button class="btn-gold" onclick="saveProfile()" style="height:42px;border-radius:10px;font-size:14px;align-self:flex-end;padding:0 22px">Guardar perfil</button>
+      </div>
+    </div>
+
+    <!-- Contraseña -->
+    <div class="sett-section">
+      <div class="sett-section-head">Cambiar contraseña</div>
+      <div class="sett-section-body">
+        <div class="form-field">
+          <label class="form-label">Contraseña actual</label>
+          <input class="form-input" id="sett-cur-pw" type="password" placeholder="••••••••">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Nueva contraseña</label>
+          <input class="form-input" id="sett-new-pw" type="password" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Confirmar nueva contraseña</label>
+          <input class="form-input" id="sett-conf-pw" type="password" placeholder="Repite la nueva contraseña">
+        </div>
+        <button class="btn-gold" onclick="savePassword()" style="height:42px;border-radius:10px;font-size:14px;align-self:flex-end;padding:0 22px">Cambiar contraseña</button>
+      </div>
+    </div>
+
+    <!-- Facebook -->
+    <div class="sett-section">
+      <div class="sett-section-head">Redes sociales</div>
+      <div class="sett-section-body">
+        {% if facebook_app_id %}
+        <div id="fb-connected" style="{{ 'display:flex' if current_user.facebook_id else 'display:none' }};align-items:center;gap:12px;background:rgba(24,119,242,0.08);border:1px solid rgba(24,119,242,0.22);border-radius:10px;padding:12px 14px">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600;color:#e8e6e1" id="fb-name">{{ current_user.facebook_name or 'Facebook' }}</div>
+            <div style="font-size:12px;color:#9aa0a8">Cuenta vinculada</div>
+          </div>
+          <button onclick="disconnectFacebook()" style="background:none;border:1px solid rgba(232,230,225,0.14);border-radius:8px;color:#9aa0a8;font-size:12.5px;font-weight:600;padding:6px 12px;cursor:pointer">Desconectar</button>
+        </div>
+        <button id="fb-connect-btn" onclick="connectFacebook()" style="{{ 'display:none' if current_user.facebook_id else 'display:flex' }};align-items:center;justify-content:center;gap:10px;width:100%;height:44px;border-radius:10px;border:none;background:#1877F2;color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;font-family:'Hanken Grotesk',sans-serif">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+          Conectar con Facebook
+        </button>
+        {% else %}
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(232,230,225,0.04);border-radius:10px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6c727b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span style="font-size:13px;color:#6c727b">Agrega <code style="background:rgba(232,230,225,0.08);padding:1px 5px;border-radius:4px">FACEBOOK_APP_ID</code> al archivo <code style="background:rgba(232,230,225,0.08);padding:1px 5px;border-radius:4px">.env</code> para activar la integración.</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</aside>
+
+{% if facebook_app_id %}
+<div id="fb-root"></div>
+<script>
+window.fbAsyncInit = function() {
+  FB.init({ appId: '{{ facebook_app_id }}', cookie: true, xfbml: false, version: 'v19.0' });
+};
+(function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(d.getElementById(id))return;js=d.createElement(s);js.id=id;js.src="https://connect.facebook.net/es_MX/sdk.js";fjs.parentNode.insertBefore(js,fjs);}(document,'script','facebook-jssdk'));
+</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function updateCountdowns(){
+  document.querySelectorAll('.countdown[data-ends]').forEach(el=>{
+    const ms=parseInt(el.dataset.ends);
+    const rem=ms-Date.now();
+    if(rem<=0){el.textContent='Finalizada';return}
+    const d=Math.floor(rem/86400000),h=Math.floor((rem%86400000)/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
+    const pad=n=>String(n).padStart(2,'0');
+    el.textContent=d>0?`${d}d ${h}h`:h>0?`${h}h ${pad(m)}m`:`${m}m ${pad(s)}s`;
+  });
+}
+updateCountdowns();setInterval(updateCountdowns,1000);
+
+function toggleWatch(id,btn){
+  fetch(`/api/auctions/${id}/watch`,{method:'POST',credentials:'include'})
+    .then(r=>{if(!r.ok&&r.status===401){window.location.href='/auth/login';return}return r.json()})
+    .then(d=>{if(!d)return;const svg=btn.querySelector('svg');svg.setAttribute('fill',d.watching?'#e0573f':'none');btn.dataset.watched=d.watching;});
+}
+
+// Settings drawer
+function openSettings(){
+  document.getElementById('sett-overlay').classList.add('open');
+  document.getElementById('sett-drawer').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeSettings(){
+  document.getElementById('sett-overlay').classList.remove('open');
+  document.getElementById('sett-drawer').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+async function saveProfile(){
+  const name=document.getElementById('sett-name').value.trim();
+  const email=document.getElementById('sett-email').value.trim();
+  const r=await fetch('/api/users/me',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({display_name:name,email}),credentials:'include'});
+  const d=await r.json();
+  if(!r.ok){showToast(d.detail||'Error al guardar','error');return;}
+  showToast('Perfil actualizado');
+}
+
+async function savePassword(){
+  const cur=document.getElementById('sett-cur-pw').value;
+  const nw=document.getElementById('sett-new-pw').value;
+  const conf=document.getElementById('sett-conf-pw').value;
+  if(!cur||!nw||!conf){showToast('Completa todos los campos','error');return;}
+  if(nw!==conf){showToast('Las contraseñas no coinciden','error');return;}
+  const r=await fetch('/api/users/me',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({current_password:cur,new_password:nw}),credentials:'include'});
+  const d=await r.json();
+  if(!r.ok){showToast(d.detail||'Error','error');return;}
+  showToast('Contraseña actualizada');
+  document.getElementById('sett-cur-pw').value='';
+  document.getElementById('sett-new-pw').value='';
+  document.getElementById('sett-conf-pw').value='';
+}
+
+function connectFacebook(){
+  if(typeof FB==='undefined'){showToast('Facebook SDK no cargado','error');return;}
+  FB.login(function(response){
+    if(!response.authResponse)return;
+    fetch('/api/users/me/facebook',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({access_token:response.authResponse.accessToken}),credentials:'include'})
+      .then(r=>r.json()).then(d=>{
+        if(d.ok){
+          document.getElementById('fb-connect-btn').style.display='none';
+          const conn=document.getElementById('fb-connected');
+          conn.style.display='flex';
+          document.getElementById('fb-name').textContent=d.facebook_name||'Facebook';
+          showToast('Facebook conectado');
+        }else{showToast(d.detail||'Error al conectar','error');}
+      });
+  },{scope:'public_profile'});
+}
+
+async function disconnectFacebook(){
+  const r=await fetch('/api/users/me/facebook',{method:'DELETE',credentials:'include'});
+  if(r.ok){
+    document.getElementById('fb-connected').style.display='none';
+    document.getElementById('fb-connect-btn').style.display='flex';
+    showToast('Facebook desvinculado');
+  }
+}
+</script>
+{% endblock %}

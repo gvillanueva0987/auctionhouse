@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% from "partials/auction_card.html" import auction_card %}
+{% block title %}{{ store.name if store and store.name else (seller.display_name or seller.username) }} — RAREZA{% endblock %}
+
+{% block extra_head %}
+<style>
+.seller-header{display:flex;flex-direction:column;align-items:center;gap:18px;padding:40px 0 36px;text-align:center}
+.store-logo{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid rgba(200,162,74,0.4);box-shadow:0 8px 30px rgba(0,0,0,0.4)}
+.seller-avatar{width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,#1f2a44,#2c3a5e);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:44px;font-weight:700;color:#cdd6ea;border:3px solid rgba(200,162,74,0.4);box-shadow:0 8px 30px rgba(0,0,0,0.4)}
+.seller-stats{display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:center}
+.stat-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 16px}
+.stat-value{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#e8e6e1}
+.stat-label{font-size:11px;letter-spacing:0.07em;text-transform:uppercase;color:#6c727b}
+.stat-divider{width:1px;height:32px;background:rgba(232,230,225,0.1)}
+.section-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(218px,1fr));gap:18px}
+.shipping-info{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.shipping-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;background:rgba(232,230,225,0.05);border:1px solid rgba(232,230,225,0.1);color:#b6bac1}
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:12px;padding:50px 20px;text-align:center;color:#6c727b}
+</style>
+{% endblock %}
+
+{% block content %}
+<main style="max-width:1180px;margin:0 auto;padding:22px 28px 70px">
+  <a href="javascript:history.back()" style="display:inline-flex;align-items:center;gap:7px;color:#9aa0a8;font-size:14px;font-weight:600;text-decoration:none">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    Volver
+  </a>
+
+  <div class="seller-header">
+    {% if store and store.logo_path %}
+      <img src="{{ store.logo_path }}" alt="{{ store.name }}" class="store-logo">
+    {% else %}
+      <div class="seller-avatar">{{ (seller.display_name or seller.username)[0].upper() }}</div>
+    {% endif %}
+
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+      <h1 style="margin:0;font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:#f4f2ec">{{ store.name if store and store.name else (seller.display_name or seller.username) }}</h1>
+      {% if store and store.name and (seller.display_name or seller.username) != store.name %}
+      <span style="font-size:14px;color:#9aa0a8">por {{ seller.display_name or seller.username }}</span>
+      {% endif %}
+      {% if store and store.bio %}
+      <p style="margin:4px 0 0;font-size:14px;color:#b6bac1;max-width:500px;line-height:1.5">{{ store.bio }}</p>
+      {% endif %}
+    </div>
+
+    <div class="seller-stats">
+      <div class="stat-item">
+        <span class="stat-value" style="color:#e6c878">★ {{ seller.rating }}</span>
+        <span class="stat-label">Reputacion</span>
+      </div>
+      <span class="stat-divider"></span>
+      <div class="stat-item">
+        <span class="stat-value">{{ seller.sales_count }}</span>
+        <span class="stat-label">Ventas</span>
+      </div>
+      <span class="stat-divider"></span>
+      <div class="stat-item">
+        <span class="stat-value">{{ auction_cards|length + offer_cards|length }}</span>
+        <span class="stat-label">Publicaciones</span>
+      </div>
+      {% if seller.location %}
+      <span class="stat-divider"></span>
+      <div class="stat-item">
+        <span class="stat-value" style="font-size:15px">{{ seller.location }}</span>
+        <span class="stat-label">Ubicacion</span>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if store %}
+    <div class="shipping-info">
+      {% if store.ship_nacional %}
+      <span class="shipping-chip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8a24a" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Nacional {{ fmt_price(store.cost_nacional, currency) }}
+      </span>
+      {% endif %}
+      {% if store.ship_regional %}
+      <span class="shipping-chip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8a24a" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Regional {{ fmt_price(store.cost_regional, currency) }}
+      </span>
+      {% endif %}
+      {% if store.ship_intl %}
+      <span class="shipping-chip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8a24a" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Internacional {{ fmt_price(store.cost_intl, currency) }}
+      </span>
+      {% endif %}
+      {% if store.tracked %}
+      <span class="shipping-chip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6fe0a3" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+        Con seguimiento
+      </span>
+      {% endif %}
+      {% if store.free_over_on %}
+      <span class="shipping-chip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6fe0a3" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+        Gratis desde {{ fmt_price(store.free_over, currency) }}
+      </span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Active Auctions -->
+  <section style="margin-top:10px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <h2 class="section-title">Subastas activas</h2>
+      <span class="chip chip-gold" style="font-size:11px">{{ auction_cards|length }}</span>
+    </div>
+    {% if auction_cards %}
+    <div class="section-grid">
+      {% for card in auction_cards %}
+        {{ auction_card(card, currency) }}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3a4049" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+      <span style="font-size:14px">No hay subastas activas en este momento</span>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Fixed Price Offers -->
+  <section style="margin-top:48px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <h2 class="section-title">Ofertas a precio fijo</h2>
+      <span class="chip chip-gold" style="font-size:11px">{{ offer_cards|length }}</span>
+    </div>
+    {% if offer_cards %}
+    <div class="section-grid">
+      {% for card in offer_cards %}
+        {{ auction_card(card, currency) }}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3a4049" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      <span style="font-size:14px">No hay ofertas a precio fijo en este momento</span>
+    </div>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function updateCountdowns(){
+  document.querySelectorAll('.countdown[data-ends]').forEach(el=>{
+    const ms=parseInt(el.dataset.ends);
+    const rem=ms-Date.now();
+    if(rem<=0){el.textContent='Finalizada';return}
+    const d=Math.floor(rem/86400000),h=Math.floor((rem%86400000)/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
+    const pad=n=>String(n).padStart(2,'0');
+    el.textContent=d>0?`${d}d ${h}h`:h>0?`${h}h ${pad(m)}m`:`${m}m ${pad(s)}s`;
+  });
+}
+updateCountdowns();
+setInterval(updateCountdowns,1000);
+
+function toggleWatch(id,btn){
+  fetch(`/api/auctions/${id}/watch`,{method:'POST',credentials:'include'})
+    .then(r=>{
+      if(!r.ok && r.status===401){window.location.href='/auth/login';return}
+      return r.json();
+    })
+    .then(d=>{
+      if(!d)return;
+      const svg=btn.querySelector('svg');
+      svg.setAttribute('fill',d.watching?'#e0573f':'none');
+      btn.dataset.watched=d.watching;
+    });
+}
+</script>
+{% endblock %}

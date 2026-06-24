@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% from "partials/auction_card.html" import auction_card %}
+{% block title %}RAREZA — Subastas de cartas coleccionables{% endblock %}
+
+{% block extra_head %}
+<style>
+.hero{display:grid;grid-template-columns:288px 1fr;gap:40px;align-items:center;background:linear-gradient(118deg,#171c24,#101319);border:1px solid rgba(232,230,225,0.09);border-radius:22px;padding:34px;margin-bottom:46px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;top:-90px;right:-40px;width:380px;height:380px;background:radial-gradient(circle,rgba(200,162,74,0.16),transparent 70%);pointer-events:none}
+.hero-img{position:relative;cursor:pointer}
+.hero-card-wrap{position:relative;border-radius:16px;overflow:hidden;aspect-ratio:5/7;background:radial-gradient(125% 120% at 50% 0%,hsl(var(--hue) 36% 18%),hsl(var(--hue2) 32% 9%))}
+.hero-card-inner{width:62%;aspect-ratio:5/7;border-radius:9px;border:1px dashed rgba(232,230,225,0.26);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;background:rgba(15,17,21,0.3);text-align:center;padding:12px}
+.auctions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(218px,1fr));gap:18px}
+.scroll-row{display:flex;gap:16px;overflow-x:auto;padding:4px 2px 14px;scroll-snap-type:x mandatory}
+.scroll-row .auction-card{flex:none;width:234px;scroll-snap-align:start}
+.category-chip{padding:9px 17px;border-radius:999px;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid rgba(232,230,225,0.14);background:transparent;color:#9aa0a8}
+.category-chip:hover,.category-chip.active{border-color:rgba(200,162,74,0.6);background:rgba(200,162,74,0.16);color:#e6c878}
+.sort-select{appearance:none;-webkit-appearance:none;background:#181c23;border:1px solid rgba(232,230,225,0.12);border-radius:9px;color:#e8e6e1;font-size:13px;font-family:'Hanken Grotesk',sans-serif;padding:9px 32px 9px 13px;cursor:pointer;outline:none}
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="page-wrap">
+
+  {% if featured %}
+  <section class="hero" style="--hue:{{ featured.hue }};--hue2:{{ (featured.hue+20)%360 }}">
+    <div class="hero-img" onclick="location.href='/auction/{{ featured.id }}'">
+      <div class="hero-card-wrap">
+        <div style="position:absolute;inset:0;border-radius:16px;background:linear-gradient(125deg,transparent 30%,rgba(255,255,255,0.1) 47%,transparent 60%);pointer-events:none"></div>
+        <span style="position:absolute;top:12px;left:12px;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;color:#0f1115;background:#e0c074;padding:4px 8px;border-radius:7px">{{ featured.grade }}</span>
+        <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%">
+          <div class="hero-card-inner">
+            <span style="font-family:'Space Grotesk',monospace;font-size:9px;letter-spacing:0.22em;color:rgba(232,230,225,0.45);text-transform:uppercase">Ilustración</span>
+            <span style="font-size:13px;font-weight:600;color:rgba(232,230,225,0.85);line-height:1.3">{{ featured.name }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:15px;position:relative">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span class="chip chip-red"><span class="pulse"></span>Lote destacado</span>
+        <span style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9aa0a8">{{ featured.game }}</span>
+        <span style="font-size:13px;color:#9aa0a8">· {{ featured.rarity }}</span>
+      </div>
+      <h1 style="margin:0;font-family:'Space Grotesk',sans-serif;font-size:38px;line-height:1.05;font-weight:700;color:#f4f2ec;letter-spacing:-0.01em">{{ featured.name }}</h1>
+      <p style="margin:0;font-size:14px;color:#9aa0a8">{{ featured.set }} · {{ featured.watchers }}</p>
+      <div style="display:flex;align-items:flex-end;gap:40px;margin-top:8px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#6c727b">Puja actual</span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:700;color:#e6c878;line-height:1;font-variant-numeric:tabular-nums">{{ featured.price }}</span>
+          <span style="font-size:12.5px;color:#9aa0a8">{{ featured.bids }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <span style="display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#6c727b"><span class="pulse"></span>Termina en</span>
+          <span class="countdown" data-ends-text="{{ featured.countdown }}" style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:{{ featured.timer_color }};font-variant-numeric:tabular-nums">{{ featured.countdown }}</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <a href="/auction/{{ featured.id }}" class="btn-gold" style="height:52px;font-size:16px;border-radius:12px">Pujar ahora</a>
+        {% if featured.has_buy_now %}
+        <a href="/auction/{{ featured.id }}" class="btn-ghost-gold" style="height:52px;border-radius:12px">Compra ya {{ featured.buy_now_text }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if ending_cards %}
+  <section style="margin-bottom:46px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <span class="pulse"></span>
+      <h2 class="section-title">Termina pronto</h2>
+      <span style="font-size:13.5px;color:#9aa0a8;margin-left:2px">No te quedes sin pujar</span>
+    </div>
+    <div class="scroll-row">
+      {% for card in ending_cards %}
+        {{ auction_card(card, currency) }}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px">
+      <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+        {% set games = [('todas','Todas'), ('Pokémon','Pokémon'), ('Magic','Magic'), ('Yu-Gi-Oh','Yu-Gi-Oh')] %}
+        {% for val, label in games %}
+        <a href="/?game={{ val }}&sort={{ selected_sort }}"
+           class="category-chip {{ 'active' if selected_game == val else '' }}">{{ label }}</a>
+        {% endfor %}
+      </div>
+      <div style="display:flex;align-items:center;gap:9px">
+        <span style="font-size:13px;color:#9aa0a8;white-space:nowrap">{{ auction_count }} subastas</span>
+        <div style="position:relative;display:inline-flex;align-items:center">
+          <select class="sort-select" onchange="location.href='/?game={{ selected_game }}&sort='+this.value">
+            <option value="termina" {{ 'selected' if selected_sort=='termina' }}>Termina pronto</option>
+            <option value="precio_asc" {{ 'selected' if selected_sort=='precio_asc' }}>Precio: menor a mayor</option>
+            <option value="precio_desc" {{ 'selected' if selected_sort=='precio_desc' }}>Precio: mayor a menor</option>
+            <option value="pujas" {{ 'selected' if selected_sort=='pujas' }}>Más pujas</option>
+            <option value="recientes" {{ 'selected' if selected_sort=='recientes' }}>Recién listadas</option>
+          </select>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa0a8" stroke-width="2" stroke-linecap="round" style="position:absolute;right:11px;pointer-events:none"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="auctions-grid">
+      {% for card in auction_cards %}
+        {{ auction_card(card, currency) }}
+      {% endfor %}
+    </div>
+  </section>
+
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Countdown timers
+function updateCountdowns(){
+  document.querySelectorAll('.countdown[data-ends]').forEach(el=>{
+    const ms=parseInt(el.dataset.ends);
+    const rem=ms-Date.now();
+    if(rem<=0){el.textContent='Finalizada';return}
+    const d=Math.floor(rem/86400000),h=Math.floor((rem%86400000)/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
+    const pad=n=>String(n).padStart(2,'0');
+    el.textContent=d>0?`${d}d ${h}h`:h>0?`${h}h ${pad(m)}m`:`${m}m ${pad(s)}s`;
+  });
+}
+updateCountdowns();
+setInterval(updateCountdowns,1000);
+
+// Watch toggle
+function toggleWatch(id,btn){
+  fetch(`/api/auctions/${id}/watch`,{method:'POST',credentials:'include'})
+    .then(r=>{
+      if(!r.ok){window.location.href='/auth/login';return}
+      return r.json();
+    })
+    .then(d=>{
+      if(!d)return;
+      const svg=btn.querySelector('svg');
+      svg.setAttribute('fill',d.watching?'#e0573f':'none');
+      btn.dataset.watched=d.watching;
+    });
+}
+</script>
+{% endblock %}

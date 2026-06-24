@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% from "partials/auction_card.html" import auction_card %}
+{% block title %}Explorar subastas — RAREZA{% endblock %}
+
+{% block extra_head %}
+<style>
+.search-layout{display:grid;grid-template-columns:250px 1fr;gap:32px;align-items:start;margin-top:24px}
+.filters-panel{position:sticky;top:90px;background:#14181f;border:1px solid rgba(232,230,225,0.08);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:22px}
+.filter-section{border-top:1px solid rgba(232,230,225,0.07);padding-top:18px}
+.filter-section:first-of-type{border-top:none;padding-top:0}
+.filter-label{display:block;font-size:11px;letter-spacing:0.07em;text-transform:uppercase;color:#6c727b;margin-bottom:11px}
+.filter-check{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px;color:#cfd2d6;padding:3px 0}
+.filter-check input{width:16px;height:16px;accent-color:#c8a24a;cursor:pointer}
+.price-inputs{display:flex;align-items:center;gap:9px}
+.price-input{width:100%;min-width:0;background:#0f1115;border:1px solid rgba(232,230,225,0.14);border-radius:9px;color:#e8e6e1;font-size:13px;font-family:'Space Grotesk',sans-serif;padding:9px 11px;outline:none}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(216px,1fr));gap:18px}
+.sort-sel{appearance:none;-webkit-appearance:none;background:#181c23;border:1px solid rgba(232,230,225,0.12);border-radius:9px;color:#e8e6e1;font-size:13px;font-family:'Hanken Grotesk',sans-serif;padding:9px 32px 9px 13px;cursor:pointer;outline:none}
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:80px 20px;background:#14181f;border:1px dashed rgba(232,230,225,0.12);border-radius:16px}
+@media(max-width:768px){.search-layout{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="page-wrap">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div>
+      <h1 style="margin:0;font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:#f4f2ec">Explorar subastas</h1>
+      <p style="margin:8px 0 0;font-size:14px;color:#9aa0a8">
+        {% if query %}<span>Resultados para "{{ query }}" · </span>{% endif %}
+        {{ result_count }} {% if result_count == 1 %}resultado{% else %}resultados{% endif %}
+      </p>
+    </div>
+    <div style="position:relative;display:inline-flex;align-items:center">
+      <select class="sort-sel" onchange="applySort(this.value)">
+        <option value="termina" {{ 'selected' if selected_sort=='termina' }}>Termina pronto</option>
+        <option value="precio_asc" {{ 'selected' if selected_sort=='precio_asc' }}>Precio: menor a mayor</option>
+        <option value="precio_desc" {{ 'selected' if selected_sort=='precio_desc' }}>Precio: mayor a menor</option>
+        <option value="pujas" {{ 'selected' if selected_sort=='pujas' }}>Más pujas</option>
+        <option value="recientes" {{ 'selected' if selected_sort=='recientes' }}>Recién listadas</option>
+      </select>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa0a8" stroke-width="2" stroke-linecap="round" style="position:absolute;right:11px;pointer-events:none"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+  </div>
+
+  <div class="search-layout">
+    <!-- Filters -->
+    <aside class="filters-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#e8e6e1">Filtros</span>
+        <a href="/search" style="color:#9aa0a8;font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none">Limpiar</a>
+      </div>
+
+      <div>
+        <span class="filter-label">Categoría</span>
+        {% for g in ['Pokémon','Magic','Yu-Gi-Oh'] %}
+        <label class="filter-check">
+          <input type="checkbox" onchange="applyFilter()" name="game" value="{{ g }}" {{ 'checked' if g in selected_game }}>
+          <span>{{ g }}</span>
+        </label>
+        {% endfor %}
+      </div>
+
+      <div class="filter-section">
+        <span class="filter-label">Tipo de venta</span>
+        <label class="filter-check">
+          <input type="checkbox" onchange="applyFilter()" name="sale_type" value="subasta" {{ 'checked' if selected_sale_type=='subasta' }}>
+          <span>Subasta</span>
+        </label>
+        <label class="filter-check">
+          <input type="checkbox" onchange="applyFilter()" name="sale_type" value="fijo" {{ 'checked' if selected_sale_type=='fijo' }}>
+          <span>Precio fijo</span>
+        </label>
+      </div>
+
+      <div class="filter-section">
+        <span class="filter-label">Graduación</span>
+        {% for g in ['PSA 10','PSA 9','BGS 9.5','CGC 9','Sin graduar'] %}
+        <label class="filter-check">
+          <input type="checkbox" onchange="applyFilter()" name="grade_filter" value="{{ g }}">
+          <span>{{ g }}</span>
+        </label>
+        {% endfor %}
+      </div>
+
+      <div class="filter-section">
+        <span class="filter-label">Precio ({{ currency }})</span>
+        <div class="price-inputs">
+          <input class="price-input" type="number" id="min-price" placeholder="Mín" value="{{ min_price }}" onchange="applyFilter()"/>
+          <span style="color:#6c727b">—</span>
+          <input class="price-input" type="number" id="max-price" placeholder="Máx" value="{{ max_price }}" onchange="applyFilter()"/>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Results -->
+    <div>
+      {% if results %}
+      <div class="results-grid">
+        {% for card in results %}
+          {{ auction_card(card, currency) }}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;color:#e8e6e1">Sin resultados</span>
+        <span style="font-size:14px;color:#9aa0a8;max-width:340px">No encontramos cartas con esos filtros. Intenta quitar algunos o cambiar la búsqueda.</span>
+        <a href="/search" class="btn-ghost-gold" style="margin-top:4px;height:44px;padding:0 20px;font-size:14px;border-radius:11px">Limpiar filtros</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function updateCountdowns(){
+  document.querySelectorAll('.countdown[data-ends]').forEach(el=>{
+    const ms=parseInt(el.dataset.ends);
+    const rem=ms-Date.now();
+    if(rem<=0){el.textContent='Finalizada';return}
+    const d=Math.floor(rem/86400000),h=Math.floor((rem%86400000)/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
+    const pad=n=>String(n).padStart(2,'0');
+    el.textContent=d>0?`${d}d ${h}h`:h>0?`${h}h ${pad(m)}m`:`${m}m ${pad(s)}s`;
+  });
+}
+updateCountdowns();setInterval(updateCountdowns,1000);
+
+function toggleWatch(id,btn){
+  fetch(`/api/auctions/${id}/watch`,{method:'POST',credentials:'include'})
+    .then(r=>{if(!r.ok&&r.status===401){window.location.href='/auth/login';return}return r.json()})
+    .then(d=>{if(!d)return;const svg=btn.querySelector('svg');svg.setAttribute('fill',d.watching?'#e0573f':'none');btn.dataset.watched=d.watching;});
+}
+
+function buildURL(){
+  const params = new URLSearchParams();
+  const q = new URLSearchParams(location.search).get('q');
+  if(q) params.set('q',q);
+  const games = [...document.querySelectorAll('input[name="game"]:checked')].map(i=>i.value);
+  if(games.length) params.set('game',games.join(','));
+  const saleTypes = [...document.querySelectorAll('input[name="sale_type"]:checked')].map(i=>i.value);
+  if(saleTypes.length===1) params.set('sale_type',saleTypes[0]);
+  const min = document.getElementById('min-price').value;
+  const max = document.getElementById('max-price').value;
+  if(min) params.set('min_price',min);
+  if(max) params.set('max_price',max);
+  params.set('sort','{{ selected_sort }}');
+  return '/search?'+params.toString();
+}
+function applyFilter(){location.href=buildURL();}
+function applySort(v){
+  const url=new URL(location.href);
+  url.searchParams.set('sort',v);
+  location.href=url.toString();
+}
+</script>
+{% endblock %}

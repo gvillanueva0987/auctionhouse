@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entrar — RAREZA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;min-height:100vh;background:#0f1115;color:#e8e6e1;font-family:'Hanken Grotesk',system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
+.card{background:#14181f;border:1px solid rgba(232,230,225,0.1);border-radius:20px;padding:36px;width:100%;max-width:420px;margin:20px}
+.logo{display:flex;align-items:center;gap:11px;margin-bottom:28px;justify-content:center}
+.logo-gem{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#e0c074,#c8a24a);display:flex;align-items:center;justify-content:center;transform:rotate(45deg);box-shadow:0 4px 14px rgba(200,162,74,0.35)}
+.logo-gem span{width:11px;height:11px;background:#0f1115;border-radius:2px}
+h1{margin:0 0 6px;font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:#f4f2ec;text-align:center}
+p{margin:0 0 24px;font-size:14px;color:#9aa0a8;text-align:center}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+label{font-size:11px;font-weight:600;color:#9aa0a8}
+input{background:#0f1115;border:1px solid rgba(232,230,225,0.14);border-radius:9px;color:#e8e6e1;font-size:14px;font-family:'Hanken Grotesk',sans-serif;padding:11px 14px;outline:none;color-scheme:dark;width:100%}
+input:focus{border-color:rgba(200,162,74,0.5)}
+.btn-gold{width:100%;background:linear-gradient(135deg,#e0c074,#c8a24a);color:#0f1115;border:none;border-radius:11px;height:48px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;font-family:'Hanken Grotesk',sans-serif}
+.btn-gold:hover{filter:brightness(1.07)}
+.footer-link{margin-top:20px;text-align:center;font-size:13.5px;color:#9aa0a8}
+.footer-link a{color:#e6c878;text-decoration:none;font-weight:600}
+.error{background:rgba(224,87,63,0.15);border:1px solid rgba(224,87,63,0.3);border-radius:9px;padding:10px 14px;font-size:13px;color:#ff9d8a;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <span class="logo-gem"><span></span></span>
+    <span style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;letter-spacing:0.05em">RAREZA</span>
+  </div>
+  <h1>Bienvenido</h1>
+  <p>Entra a tu cuenta para pujar y coleccionar</p>
+
+  <div id="error-msg" style="display:none" class="error"></div>
+
+  <form id="login-form" onsubmit="doLogin(event)">
+    <div class="field">
+      <label>Email</label>
+      <input type="email" name="email" required placeholder="tu@email.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn-gold">Entrar</button>
+  </form>
+
+  <p class="footer-link">¿No tienes cuenta? <a href="/auth/register">Regístrate</a></p>
+  <p style="text-align:center;margin-top:8px;font-size:12px;color:#6c727b">Demo: cualquier usuario del seed usa password <strong>rareza123</strong><br>Email ej: cartasdelsur@rareza.com</p>
+</div>
+
+<script>
+async function doLogin(e){
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  const r=await fetch('/api/auth/login',{method:'POST',body:fd});
+  if(r.redirected){window.location.href=r.url;return;}
+  if(!r.ok){
+    const d=await r.json().catch(()=>({detail:'Error al entrar'}));
+    document.getElementById('error-msg').style.display='block';
+    document.getElementById('error-msg').textContent=d.detail||'Error al entrar';
+    return;
+  }
+  window.location.href='/';
+}
+</script>
+</body>
+</html>

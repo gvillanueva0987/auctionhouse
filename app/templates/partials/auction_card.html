@@ -1,0 +1,58 @@
+{% macro auction_card(card, currency) %}
+<div class="auction-card" onclick="location.href='/auction/{{ card.id }}'"
+  style="position:relative;display:flex;flex-direction:column;background:#14181f;border:1px solid rgba(232,230,225,0.09);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;font-family:'Hanken Grotesk',system-ui,sans-serif"
+  onmouseenter="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(200,162,74,0.5)';this.style.boxShadow='0 18px 40px rgba(0,0,0,0.55)'"
+  onmouseleave="this.style.transform='';this.style.borderColor='rgba(232,230,225,0.09)';this.style.boxShadow=''">
+
+  <div style="position:relative;width:100%;aspect-ratio:1/1.12;display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(232,230,225,0.07);background:radial-gradient(125% 120% at 50% 0%,hsl({{ card.hue }} 36% 18%),hsl({{ (card.hue + 20) % 360 }} 32% 9%))">
+    {% if card.image_path %}
+      <img src="{{ card.image_path }}" alt="{{ card.name }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+    {% else %}
+      <div style="width:56%;aspect-ratio:5/7;border-radius:8px;border:1px dashed rgba(232,230,225,0.2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:rgba(15,17,21,0.32);text-align:center;padding:10px">
+        <span style="font-family:'Space Grotesk',monospace;font-size:8.5px;letter-spacing:0.2em;color:rgba(232,230,225,0.42);text-transform:uppercase">Ilustración</span>
+        <span style="font-size:11.5px;font-weight:600;color:rgba(232,230,225,0.8);line-height:1.25">{{ card.name }}</span>
+      </div>
+    {% endif %}
+    {% if card.has_grade %}
+      <span style="position:absolute;top:10px;left:10px;font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;color:#0f1115;background:#c8a24a;padding:3px 7px;border-radius:6px">{{ card.grade }}</span>
+    {% endif %}
+    <button onclick="event.stopPropagation();toggleWatch({{ card.id }},this)"
+      data-watched="{{ 'true' if card.is_watched else 'false' }}"
+      aria-label="Seguir carta"
+      style="position:absolute;top:8px;right:8px;width:33px;height:33px;border-radius:50%;border:1px solid rgba(232,230,225,0.16);background:rgba(15,17,21,0.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="{{ '#e0573f' if card.is_watched else 'none' }}" stroke="#e0573f" stroke-width="2" stroke-linejoin="round"><path d="M12 20.5S3.5 15 3.5 9.2C3.5 6.3 5.7 4.5 8 4.5c1.6 0 3 .9 4 2.3 1-1.4 2.4-2.3 4-2.3 2.3 0 4.5 1.8 4.5 4.7 0 5.8-8.5 11.3-8.5 11.3z"/></svg>
+    </button>
+    {% if card.urgent %}
+      <span style="position:absolute;bottom:10px;left:10px;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:#ffd9cf;background:rgba(224,87,63,0.92);padding:4px 8px;border-radius:999px">
+        <span style="width:6px;height:6px;border-radius:50%;background:#fff"></span>Termina pronto
+      </span>
+    {% endif %}
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:7px;padding:12px 13px 13px">
+    <div style="display:flex;align-items:center;gap:7px">
+      <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9aa0a8">{{ card.game }}</span>
+      <span style="width:3px;height:3px;border-radius:50%;background:#3a4049"></span>
+      <span style="font-size:11px;color:#9aa0a8">{{ card.rarity }}</span>
+    </div>
+    <h3 style="margin:0;font-size:14.5px;font-weight:600;line-height:1.3;color:#e8e6e1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:38px">{{ card.name }}</h3>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:1px">
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <span style="font-size:9.5px;letter-spacing:0.07em;text-transform:uppercase;color:#6c727b">Puja actual</span>
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:700;color:#c8a24a;line-height:1;font-variant-numeric:tabular-nums">{{ card.price_text }}</span>
+      </div>
+      <span style="font-size:11px;color:#9aa0a8;padding-bottom:2px;white-space:nowrap">{{ card.bid_count_text }}</span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;padding-top:10px;border-top:1px solid rgba(232,230,225,0.07)">
+      <span style="display:inline-flex;align-items:center;gap:5px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ card.timer_color }}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+        <span class="countdown" data-ends="{{ card.ends_at_ms }}" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;font-variant-numeric:tabular-nums;color:{{ card.timer_color }}">{{ card.ends_text }}</span>
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#6c727b">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6c727b" stroke-width="2"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        {{ card.watchers }}
+      </span>
+    </div>
+  </div>
+</div>
+{% endmacro %}
