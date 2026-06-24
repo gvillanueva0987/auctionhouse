@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     MYSQL_DATABASE: str = "rareza_db"
 
     DATABASE_URL: str = ""
+    MYSQL_URL: str = ""
 
     SECRET_KEY: str = "dev-secret-key-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days
@@ -22,8 +23,9 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        if self.DATABASE_URL:
-            url = self.DATABASE_URL
+        raw = self.DATABASE_URL or self.MYSQL_URL
+        if raw:
+            url = raw
             if url.startswith("mysql://"):
                 url = url.replace("mysql://", "mysql+pymysql://", 1)
             if "charset" not in url:
