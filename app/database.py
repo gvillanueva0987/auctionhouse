@@ -3,6 +3,11 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
+print(f"[DB] DATABASE_URL set: {bool(os.environ.get('DATABASE_URL'))}", flush=True)
+print(f"[DB] MYSQL_URL set: {bool(os.environ.get('MYSQL_URL'))}", flush=True)
+print(f"[DB] Total env vars: {len(os.environ)}", flush=True)
+print(f"[DB] .env file exists: {os.path.exists('.env')}", flush=True)
+
 raw_url = os.environ.get("DATABASE_URL") or os.environ.get("MYSQL_URL") or ""
 
 if raw_url:

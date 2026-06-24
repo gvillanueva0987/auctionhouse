@@ -17,6 +17,8 @@ class User(Base):
     rating = Column(DECIMAL(2, 1), default=5.0)
     sales_count = Column(Integer, default=0)
     location = Column(String(100), default="Argentina")
+    phone = Column(String(30))
+    shipping_address = Column(String(255))
     facebook_id = Column(String(64), default=None)
     facebook_name = Column(String(255), default=None)
     created_at = Column(DateTime, server_default=func.now())

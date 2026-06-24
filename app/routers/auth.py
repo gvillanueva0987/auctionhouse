@@ -30,6 +30,8 @@ async def register(
     password: str = Form(...),
     display_name: str = Form(""),
     location: str = Form("Argentina"),
+    phone: str = Form(""),
+    shipping_address: str = Form(""),
     db: Session = Depends(get_db),
 ):
     if db.query(User).filter(User.username == username).first():
@@ -43,6 +45,8 @@ async def register(
         password_hash=hash_password(password),
         display_name=display_name or username,
         location=location,
+        phone=phone.strip() or None,
+        shipping_address=shipping_address.strip() or None,
     )
     db.add(user)
     db.flush()

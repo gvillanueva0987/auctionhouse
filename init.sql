@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
     rating DECIMAL(2,1) DEFAULT 5.0,
     sales_count INT DEFAULT 0,
     location VARCHAR(100) DEFAULT 'Argentina',
+    phone VARCHAR(30) DEFAULT NULL,
+    shipping_address VARCHAR(255) DEFAULT NULL,
     facebook_id VARCHAR(64) DEFAULT NULL,
     facebook_name VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

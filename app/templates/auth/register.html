@@ -70,6 +70,20 @@ input:focus,select:focus{border-color:rgba(200,162,74,0.5)}
         <option>Otro</option>
       </select>
     </div>
+
+    <div style="background:rgba(200,162,74,0.06);border:1px solid rgba(200,162,74,0.2);border-radius:11px;padding:14px 16px;margin:6px 0 4px;display:flex;align-items:flex-start;gap:10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a24a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span style="font-size:12.5px;color:#b6bac1;line-height:1.5">Esta información será utilizada por los vendedores para coordinar el envío de tus productos.</span>
+    </div>
+    <div class="field">
+      <label>Dirección de envío</label>
+      <input type="text" name="shipping_address" placeholder="Calle, número, ciudad, código postal" maxlength="255">
+    </div>
+    <div class="field">
+      <label>Número de teléfono</label>
+      <input type="tel" name="phone" placeholder="+54 9 11 1234-5678" maxlength="30">
+    </div>
+
     <button type="submit" class="btn-gold">Crear cuenta</button>
   </form>
 
