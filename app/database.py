@@ -1,25 +1,22 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from .config import get_settings
-import logging
 import os
 
-logger = logging.getLogger(__name__)
+raw_url = os.environ.get("DATABASE_URL") or os.environ.get("MYSQL_URL") or ""
 
-# Debug: show all DB-related env vars Railway provides
-for key in sorted(os.environ):
-    if any(k in key.upper() for k in ["MYSQL", "DATABASE", "DB_"]):
-        val = os.environ[key]
-        if "@" in val:
-            val = "..." + val.split("@")[-1]
-        logger.warning(f"ENV {key} = {val}")
+if raw_url:
+    db_url = raw_url
+    if db_url.startswith("mysql://"):
+        db_url = db_url.replace("mysql://", "mysql+pymysql://", 1)
+    if "charset" not in db_url:
+        db_url += ("&" if "?" in db_url else "?") + "charset=utf8mb4"
+else:
+    from .config import get_settings
+    db_url = get_settings().database_url
 
-settings = get_settings()
-
-db_url = settings.database_url
 safe_url = db_url.split("@")[-1] if "@" in db_url else db_url
-logger.warning(f"Connecting to database: ...@{safe_url}")
+print(f"[DB] Connecting to: ...@{safe_url}", flush=True)
 
 engine = create_engine(
     db_url,
