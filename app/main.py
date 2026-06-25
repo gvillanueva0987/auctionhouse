@@ -15,6 +15,10 @@ with engine.connect() as _conn:
     for _sql in [
         "ALTER TABLE messages ADD COLUMN image_url VARCHAR(500) NULL",
         "ALTER TABLE sales ADD COLUMN shipped_at DATETIME NULL",
+        "ALTER TABLE users ADD COLUMN shipping_street VARCHAR(255) NULL",
+        "ALTER TABLE users ADD COLUMN shipping_city VARCHAR(100) NULL",
+        "ALTER TABLE users ADD COLUMN shipping_state VARCHAR(100) NULL",
+        "ALTER TABLE users ADD COLUMN shipping_postal VARCHAR(20) NULL",
     ]:
         try:
             _conn.execute(text(_sql))

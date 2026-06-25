@@ -76,8 +76,22 @@ input:focus,select:focus{border-color:rgba(200,162,74,0.5)}
       <span style="font-size:12.5px;color:#b6bac1;line-height:1.5">Esta información será utilizada por los vendedores para coordinar el envío de tus productos.</span>
     </div>
     <div class="field">
-      <label>Dirección de envío</label>
-      <input type="text" name="shipping_address" placeholder="Calle, número, ciudad, código postal" maxlength="255">
+      <label>Calle y Cruzamientos</label>
+      <input type="text" name="shipping_street" placeholder="Ej. Av. Corrientes 1234 e/ Callao y Ayacucho" maxlength="255">
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Estado / Provincia</label>
+        <input type="text" name="shipping_state" placeholder="Buenos Aires" maxlength="100">
+      </div>
+      <div class="field">
+        <label>Ciudad</label>
+        <input type="text" name="shipping_city" placeholder="CABA" maxlength="100">
+      </div>
+    </div>
+    <div class="field" style="max-width:180px">
+      <label>Código Postal</label>
+      <input type="text" name="shipping_postal" placeholder="1043" maxlength="20">
     </div>
     <div class="field">
       <label>Número de teléfono</label>
