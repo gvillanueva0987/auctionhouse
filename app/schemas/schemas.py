@@ -117,6 +117,14 @@ class FacebookLink(BaseModel):
     access_token: str
 
 
+class ShippingUpdate(BaseModel):
+    shipping_street: Optional[str] = None
+    shipping_colony: Optional[str] = None
+    shipping_city: Optional[str] = None
+    shipping_state: Optional[str] = None
+    shipping_postal: Optional[str] = None
+
+
 class SaleStatusUpdate(BaseModel):
     status: str
     tracking: Optional[str] = None

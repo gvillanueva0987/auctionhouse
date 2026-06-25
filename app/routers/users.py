@@ -8,7 +8,7 @@ import io, os, uuid
 
 from ..database import get_db
 from ..models.models import User, Store, Auction, Bid, Watched, Sale, Message
-from ..schemas.schemas import StoreUpdate, SaleStatusUpdate, UserUpdate, FacebookLink
+from ..schemas.schemas import StoreUpdate, SaleStatusUpdate, UserUpdate, FacebookLink, ShippingUpdate
 from ..deps import get_current_user
 from ..services.auction_service import fmt_price
 from ..config import get_settings
@@ -118,6 +118,26 @@ def update_profile(
 
     db.commit()
     return JSONResponse({"ok": True, "display_name": current_user.display_name, "email": current_user.email})
+
+
+@router.patch("/me/shipping")
+def update_shipping(
+    data: ShippingUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if data.shipping_street is not None:
+        current_user.shipping_street = data.shipping_street.strip() or None
+    if data.shipping_colony is not None:
+        current_user.shipping_colony = data.shipping_colony.strip() or None
+    if data.shipping_city is not None:
+        current_user.shipping_city = data.shipping_city.strip() or None
+    if data.shipping_state is not None:
+        current_user.shipping_state = data.shipping_state.strip() or None
+    if data.shipping_postal is not None:
+        current_user.shipping_postal = data.shipping_postal.strip() or None
+    db.commit()
+    return JSONResponse({"ok": True})
 
 
 @router.post("/me/facebook")

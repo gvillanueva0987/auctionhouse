@@ -347,6 +347,37 @@
         </div>
       </div>
 
+      <!-- Dirección de despacho -->
+      <div style="background:#14181f;border:1px solid rgba(232,230,225,0.09);border-radius:16px;overflow:hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid rgba(232,230,225,0.07)">
+          <span style="font-family:'Space Grotesk',sans-serif;font-size:13.5px;font-weight:700;color:#e8e6e1">Dirección de despacho</span>
+        </div>
+        <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+          <div class="form-field">
+            <label class="form-label">Calle y Cruzamientos</label>
+            <input class="form-input" name="shipping_street" value="{{ current_user.shipping_street or '' }}" placeholder="Ej. Av. Corrientes 1234 e/ Callao y Ayacucho" maxlength="255">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Colonia</label>
+            <input class="form-input" name="shipping_colony" value="{{ current_user.shipping_colony or '' }}" placeholder="Ej. Centro Histórico" maxlength="100">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="form-field">
+              <label class="form-label">Estado / Provincia</label>
+              <input class="form-input" name="shipping_state" value="{{ current_user.shipping_state or '' }}" placeholder="Buenos Aires" maxlength="100">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Ciudad</label>
+              <input class="form-input" name="shipping_city" value="{{ current_user.shipping_city or '' }}" placeholder="CABA" maxlength="100">
+            </div>
+          </div>
+          <div class="form-field" style="max-width:180px">
+            <label class="form-label">Código Postal</label>
+            <input class="form-input" name="shipping_postal" value="{{ current_user.shipping_postal or '' }}" placeholder="1043" maxlength="20">
+          </div>
+        </div>
+      </div>
+
       <!-- Logística -->
       <div style="background:#14181f;border:1px solid rgba(232,230,225,0.09);border-radius:16px;overflow:hidden">
         <div style="padding:14px 20px;border-bottom:1px solid rgba(232,230,225,0.07)">
@@ -827,8 +858,18 @@ async function saveStore(e){
     returns_policy:val('returns_policy'),
     win_message:val('win_message').trim()||null,
   };
-  const r=await fetch('/api/users/me/store',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),credentials:'include'});
-  if(r.ok){showToast('Tienda guardada');}
+  const shipping={
+    shipping_street:val('shipping_street'),
+    shipping_colony:val('shipping_colony'),
+    shipping_city:val('shipping_city'),
+    shipping_state:val('shipping_state'),
+    shipping_postal:val('shipping_postal'),
+  };
+  const [r1,r2]=await Promise.all([
+    fetch('/api/users/me/store',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),credentials:'include'}),
+    fetch('/api/users/me/shipping',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(shipping),credentials:'include'}),
+  ]);
+  if(r1.ok&&r2.ok){showToast('Tienda guardada');}
   else{showToast('Error al guardar','error');}
 }
 
