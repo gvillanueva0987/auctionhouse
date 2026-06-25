@@ -611,7 +611,7 @@ function addFiles(files){
   imgs.forEach(f=>{
     const id=nextId++;
     const url=URL.createObjectURL(f);
-    cards.push({id,file:f,src:url,backFile:null,backSrc:null,detailFile:null,detailSrc:null,name:'',game:'',set:'',rarity:'',grade:'',condition:'',lang:'Español',notes:'',saleType:'subasta',startPrice:'',buyNow:'',bidIncrement:'50',price:'',offers:false,isLot:false,endDate:cdmxDate(7),hue:HUES[cards.length%HUES.length]});
+    cards.push({id,file:f,src:url,backFile:null,backSrc:null,detailFile:null,detailSrc:null,name:'',game:'',set:'',rarity:'',grade:'',condition:'',lang:'Español',notes:'',saleType:'subasta',startPrice:'',buyNow:'',bidIncrement:'50',price:'',offers:false,isLot:false,endDate:cdmxDate(1),hue:HUES[cards.length%HUES.length]});
   });
   renderCards();
   showToast(imgs.length+' foto'+(imgs.length===1?'':'s')+' agregada'+(imgs.length===1?'':'s'));
@@ -901,6 +901,7 @@ async function saveStore(e){
 }
 
 const _currency='{{ currency }}';
+document.addEventListener('DOMContentLoaded',()=>{const bd=document.getElementById('bulk-date');if(bd)bd.value=cdmxDate(1);});
 const _storeInfo={
   name:{{ ((store.name if store else None) or current_user.display_name or current_user.username)|tojson }},
   street:{{ (current_user.shipping_street or '')|tojson }},
