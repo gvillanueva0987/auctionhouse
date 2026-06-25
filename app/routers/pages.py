@@ -344,6 +344,12 @@ def dashboard(
             continue
         cd = fmt_countdown(a.ends_at)
         is_winning = float(a.current_bid) == float(b.amount)
+        ended = a.status in ("ended", "sold")
+        sale = (
+            db.query(Sale)
+            .filter(Sale.auction_id == a.id, Sale.buyer_id == user.id)
+            .first()
+        ) if ended else None
         bid_items.append({
             "auction": a,
             "my_amount": fmt_price(b.amount, settings.CURRENCY),
@@ -351,6 +357,10 @@ def dashboard(
             "ends_text": cd["text"],
             "is_winning": is_winning,
             "hue": a.hue,
+            "ended": ended,
+            "ends_at_fmt": a.ends_at.strftime("%d/%m/%Y") if ended and a.ends_at else "",
+            "sale_id": sale.id if sale else None,
+            "seller_name": (a.seller.display_name or a.seller.username) if a.seller else "",
         })
 
     ctx = _common(request, user)

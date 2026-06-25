@@ -71,7 +71,11 @@
         <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
           <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9aa0a8">{{ item.auction.game }}</span>
           <span style="font-size:15px;font-weight:600;color:#e8e6e1">{{ item.auction.title }}</span>
+          {% if item.ended %}
+          <span style="font-size:12px;color:#6c727b">Finalizada el {{ item.ends_at_fmt }}</span>
+          {% else %}
           <span style="font-size:12px;color:#6c727b">Termina en {{ item.ends_text }}</span>
+          {% endif %}
         </div>
         <div style="display:flex;flex-direction:column;gap:3px;text-align:right;flex:none">
           <span style="font-size:11px;color:#6c727b">Tu puja</span>
@@ -81,10 +85,18 @@
           <span style="font-size:11px;color:#6c727b">Puja actual</span>
           <span style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;color:#e6c878">{{ item.current }}</span>
         </div>
-        {% if item.is_winning %}
-        <span class="chip chip-green" style="font-size:11px">Ganando</span>
+        {% if item.ended %}
+          {% if item.sale_id %}<span class="chip chip-green" style="font-size:11px">Ganada</span>
+          {% else %}<span class="chip chip-red" style="font-size:11px">No ganada</span>{% endif %}
+        {% elif item.is_winning %}
+          <span class="chip chip-green" style="font-size:11px">Ganando</span>
         {% else %}
-        <span class="chip chip-red" style="font-size:11px">Superado</span>
+          <span class="chip chip-red" style="font-size:11px">Superado</span>
+        {% endif %}
+        {% if item.sale_id %}
+        <button onclick="event.stopPropagation();openChat({{ item.sale_id }},'{{ item.auction.title | e }}','{{ item.seller_name | e }}')" title="Chatear con {{ item.seller_name | e }}" style="width:40px;height:40px;border-radius:10px;border:1px solid rgba(200,162,74,0.3);background:rgba(200,162,74,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:border-color .15s,background .15s" onmouseenter="this.style.borderColor='rgba(200,162,74,0.6)';this.style.background='rgba(200,162,74,0.16)'" onmouseleave="this.style.borderColor='rgba(200,162,74,0.3)';this.style.background='rgba(200,162,74,0.08)'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a24a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
         {% endif %}
       </div>
       {% endfor %}
