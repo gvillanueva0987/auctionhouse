@@ -20,9 +20,13 @@
 .publish-bar-inner{max-width:1300px;margin:0 auto;padding:13px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .sale-row{display:flex;align-items:center;gap:16px;background:#14181f;border:1px solid rgba(232,230,225,0.08);border-radius:14px;padding:14px 16px;flex-wrap:wrap}
 .sale-thumb{width:52px;height:68px;border-radius:9px;border:1px solid rgba(232,230,225,0.1);flex:none}
-.status-chip-pago{color:#ff9d8a;background:rgba(224,87,63,0.16);border:1px solid rgba(224,87,63,0.32)}
-.status-chip-envio{color:#e8c06a;background:rgba(200,162,74,0.14);border:1px solid rgba(200,162,74,0.3)}
-.status-chip-enviado{color:#6fe0a3;background:rgba(79,180,119,0.16);border:1px solid rgba(79,180,119,0.3)}
+.status-select{appearance:none;-webkit-appearance:none;cursor:pointer;font-size:12px;font-weight:700;font-family:'Hanken Grotesk',sans-serif;border-radius:999px;padding:5px 28px 5px 12px;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;background-size:11px;color-scheme:dark}
+.status-select[data-s=pago]{color:#ff9d8a;background-color:rgba(224,87,63,0.16);border:1px solid rgba(224,87,63,0.32)}
+.status-select[data-s=envio]{color:#e8c06a;background-color:rgba(200,162,74,0.14);border:1px solid rgba(200,162,74,0.3)}
+.status-select[data-s=enviado]{color:#6fe0a3;background-color:rgba(79,180,119,0.16);border:1px solid rgba(79,180,119,0.3)}
+.tracking-input{background:#0f1115;border:1px solid rgba(232,230,225,0.12);border-radius:9px;color:#e8e6e1;font-size:13px;font-family:'Hanken Grotesk',sans-serif;padding:6px 10px;outline:none;width:150px;transition:border-color .15s}
+.tracking-input:focus{border-color:rgba(200,162,74,0.4)}
+.tracking-input[readonly]{color:#9aa0a8;cursor:default;background:#12161d;border-color:rgba(232,230,225,0.07)}
 .ac-dropdown{display:none;position:fixed;z-index:500;background:#1a1f28;border:1px solid rgba(232,230,225,0.14);border-radius:10px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,0.55);max-height:260px;overflow-y:auto}
 .ac-item{padding:9px 13px;cursor:pointer;font-size:13px;color:#e8e6e1;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid rgba(232,230,225,0.06)}
 .ac-item:last-child{border-bottom:none}
@@ -180,28 +184,24 @@
           <span style="font-size:11px;color:#6c727b">Precio final</span>
           <span style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:#e6c878">{{ fmt_price(sale.final_price, currency) }}</span>
         </div>
-        <span class="chip status-chip-{{ sale.status }}">
-          {% if sale.status == 'pago' %}Pendiente de pago
-          {% elif sale.status == 'envio' %}Pendiente de envío
-          {% else %}Enviado{% endif %}
-        </span>
-        <div style="display:flex;align-items:center;gap:8px;flex:none">
-          <button onclick="openChat({{ sale.id }},'{{ sale.auction.title | e }}','{{ sale.buyer.username | e }}')" title="Chatear con {{ sale.buyer.username }}" style="width:40px;height:40px;border-radius:10px;border:1px solid rgba(200,162,74,0.3);background:rgba(200,162,74,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,background .15s" onmouseenter="this.style.borderColor='rgba(200,162,74,0.6)';this.style.background='rgba(200,162,74,0.16)'" onmouseleave="this.style.borderColor='rgba(200,162,74,0.3)';this.style.background='rgba(200,162,74,0.08)'">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a24a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <select class="status-select" data-s="{{ sale.status }}" data-sale-id="{{ sale.id }}" onchange="updateSaleStatus(this)">
+          <option value="pago"{% if sale.status == 'pago' %} selected{% endif %}>Pendiente de pago</option>
+          <option value="envio"{% if sale.status == 'envio' %} selected{% endif %}>Pendiente de envío</option>
+          <option value="enviado"{% if sale.status == 'enviado' %} selected{% endif %}>Enviado</option>
+        </select>
+        <div class="tracking-wrap" style="display:{% if sale.status == 'enviado' %}flex{% else %}none{% endif %};align-items:center;gap:6px;flex:none">
+          <input type="text" class="tracking-input" placeholder="N° de rastreo…" value="{{ sale.tracking or '' }}"{% if sale.tracking %} readonly{% endif %}
+            onkeydown="if(event.key==='Enter'){event.preventDefault();saveTracking(this)}"
+            onblur="saveTracking(this)">
+          {% if sale.tracking %}
+          <button type="button" class="tracking-edit-btn" onclick="editTracking(this)" title="Editar número de rastreo" style="width:32px;height:32px;border-radius:8px;border:1px solid rgba(232,230,225,0.12);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa0a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
-          {% if sale.status == 'envio' %}
-          <form action="/api/users/me/sales/{{ sale.id }}" method="post" onsubmit="patchSale(event,{{ sale.id }},'enviado')">
-            <button type="submit" class="btn-gold" style="height:40px;padding:0 16px;font-size:13px;border-radius:10px">Marcar enviado</button>
-          </form>
-          {% elif sale.status == 'pago' %}
-          <button onclick="alert('Se recordó al comprador')" class="btn-outline" style="height:40px;font-size:13px;border-radius:10px">Recordar pago</button>
-          {% elif sale.tracking %}
-          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#9aa0a8">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6fe0a3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-            {{ sale.tracking }}
-          </span>
           {% endif %}
         </div>
+        <button onclick="openChat({{ sale.id }},'{{ sale.auction.title | e }}','{{ sale.buyer.username | e }}')" title="Chatear con {{ sale.buyer.username }}" style="width:40px;height:40px;border-radius:10px;border:1px solid rgba(200,162,74,0.3);background:rgba(200,162,74,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:border-color .15s,background .15s" onmouseenter="this.style.borderColor='rgba(200,162,74,0.6)';this.style.background='rgba(200,162,74,0.16)'" onmouseleave="this.style.borderColor='rgba(200,162,74,0.3)';this.style.background='rgba(200,162,74,0.08)'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a24a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
       </div>
       {% endfor %}
     </div>
@@ -693,10 +693,57 @@ async function publishAll(){
   setTimeout(()=>location.href='/',1800);
 }
 
-async function patchSale(e,id,status){
-  e.preventDefault();
-  const r=await fetch(`/api/users/me/sales/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status}),credentials:'include'});
-  if(r.ok){showToast('Estado actualizado');location.reload();}
+async function updateSaleStatus(sel){
+  const saleId=sel.dataset.saleId;
+  const status=sel.value;
+  const row=sel.closest('.sale-row');
+  const trackingWrap=row.querySelector('.tracking-wrap');
+  sel.disabled=true;
+  try{
+    const r=await fetch(`/api/users/me/sales/${saleId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status}),credentials:'include'});
+    if(r.ok){
+      sel.dataset.s=status;
+      trackingWrap.style.display=status==='enviado'?'flex':'none';
+    }else{
+      sel.value=sel.dataset.s;
+    }
+  }catch{sel.value=sel.dataset.s;}
+  sel.disabled=false;
+}
+
+async function saveTracking(input){
+  const val=input.value.trim();
+  if(!val||input.readOnly)return;
+  const row=input.closest('.sale-row');
+  const saleId=row.querySelector('[data-sale-id]').dataset.saleId;
+  try{
+    const r=await fetch(`/api/users/me/sales/${saleId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'enviado',tracking:val}),credentials:'include'});
+    if(r.ok){
+      input.readOnly=true;
+      const wrap=input.closest('.tracking-wrap');
+      let btn=wrap.querySelector('.tracking-edit-btn');
+      if(!btn){
+        btn=document.createElement('button');
+        btn.type='button';
+        btn.className='tracking-edit-btn';
+        btn.title='Editar número de rastreo';
+        btn.style.cssText='width:32px;height:32px;border-radius:8px;border:1px solid rgba(232,230,225,0.12);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none';
+        btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa0a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+        btn.onclick=()=>editTracking(btn);
+        wrap.appendChild(btn);
+      }
+      btn.style.display='flex';
+    }
+  }catch{}
+}
+
+function editTracking(btn){
+  const wrap=btn.closest('.tracking-wrap');
+  const input=wrap.querySelector('.tracking-input');
+  input.readOnly=false;
+  input.focus();
+  input.select();
+  btn.style.display='none';
 }
 
 function toggleDiaFijo(val){
