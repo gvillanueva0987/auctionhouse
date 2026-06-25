@@ -17,8 +17,31 @@
       <span>Sin mensajes. Escribe para iniciar la conversación.</span>
     </div>
   </div>
-  <form id="chat-form" onsubmit="sendChatMsg(event)" style="display:flex;gap:8px;padding:14px 18px;border-top:1px solid rgba(232,230,225,0.08);flex:none">
-    <input id="chat-input" type="text" placeholder="Escribe un mensaje…" autocomplete="off" maxlength="1000" style="flex:1;background:#14181f;border:1px solid rgba(232,230,225,0.12);border-radius:10px;padding:0 14px;height:44px;color:#e8e6e1;font-size:14px;font-family:'Hanken Grotesk',sans-serif;outline:none" onfocus="this.style.borderColor='rgba(200,162,74,0.4)'" onblur="this.style.borderColor='rgba(232,230,225,0.12)'">
+
+  <!-- Image preview bar (hidden by default) -->
+  <div id="chat-img-preview" style="display:none;padding:10px 18px 0;border-top:1px solid rgba(232,230,225,0.08);flex:none">
+    <div style="position:relative;display:inline-block">
+      <img id="chat-img-thumb" src="" alt="preview" style="height:72px;border-radius:8px;border:1px solid rgba(232,230,225,0.15);object-fit:cover;max-width:120px">
+      <button onclick="clearChatImage()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#e05252;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <form id="chat-form" onsubmit="sendChatMsg(event)" style="display:flex;gap:8px;padding:14px 18px;border-top:1px solid rgba(232,230,225,0.08);flex:none;align-items:center">
+    <!-- Hidden file input -->
+    <input id="chat-file-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="onChatImageSelected(event)">
+    <!-- Paperclip button -->
+    <button type="button" onclick="document.getElementById('chat-file-input').click()" title="Adjuntar imagen"
+      style="width:44px;height:44px;border-radius:10px;border:1px solid rgba(232,230,225,0.12);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:border-color .15s"
+      onmouseover="this.style.borderColor='rgba(200,162,74,0.4)'" onmouseout="this.style.borderColor='rgba(232,230,225,0.12)'">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa0a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+      </svg>
+    </button>
+    <input id="chat-input" type="text" placeholder="Escribe un mensaje…" autocomplete="off" maxlength="1000"
+      style="flex:1;background:#14181f;border:1px solid rgba(232,230,225,0.12);border-radius:10px;padding:0 14px;height:44px;color:#e8e6e1;font-size:14px;font-family:'Hanken Grotesk',sans-serif;outline:none"
+      onfocus="this.style.borderColor='rgba(200,162,74,0.4)'" onblur="this.style.borderColor='rgba(232,230,225,0.12)'">
     <button type="submit" style="width:44px;height:44px;border-radius:10px;border:none;background:linear-gradient(135deg,#e0c074,#c8a24a);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f1115" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
     </button>
@@ -26,7 +49,7 @@
 </aside>
 
 <script>
-let _chatSaleId=null,_chatPoll=null;
+let _chatSaleId=null,_chatPoll=null,_chatImageFile=null;
 
 function openChat(saleId, title, partner){
   _chatSaleId=saleId;
@@ -48,6 +71,7 @@ function closeChat(){
   document.body.style.overflow='';
   clearInterval(_chatPoll);
   _chatSaleId=null;
+  clearChatImage();
 }
 
 async function loadMessages(){
@@ -65,8 +89,7 @@ function renderMessages(msgs){
   const empty=document.getElementById('chat-empty');
   if(!msgs.length){
     empty.style.display='flex';
-    const existing=container.querySelectorAll('.chat-bubble');
-    existing.forEach(el=>el.remove());
+    container.querySelectorAll('.chat-bubble').forEach(el=>el.remove());
     return;
   }
   empty.style.display='none';
@@ -84,11 +107,15 @@ function renderMessages(msgs){
     const border=m.mine?'rgba(200,162,74,0.3)':'rgba(232,230,225,0.1)';
     const dt=new Date(m.created_at);
     const time=dt.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    const senderHtml=!m.mine?`<div style="font-size:11px;font-weight:700;color:#c8a24a;margin-bottom:3px">${esc(m.sender_name)}</div>`:'';
+    const textHtml=m.body?`<div style="font-size:13.5px;color:#e8e6e1;line-height:1.45;word-break:break-word">${esc(m.body)}</div>`:'';
+    const imgHtml=m.image_url?`<img src="${esc(m.image_url)}" alt="imagen" loading="lazy"
+      onclick="window.open(this.src,'_blank')"
+      style="max-width:100%;max-height:260px;border-radius:8px;margin-top:${m.body?'8px':'0'};display:block;cursor:zoom-in;border:1px solid rgba(232,230,225,0.1)">`:'';
     div.style.cssText=`align-self:${align};max-width:82%;display:flex;flex-direction:column;gap:4px`;
     div.innerHTML=`
       <div style="background:${bg};border:1px solid ${border};border-radius:12px;padding:10px 14px">
-        ${!m.mine?`<div style="font-size:11px;font-weight:700;color:#c8a24a;margin-bottom:3px">${esc(m.sender_name)}</div>`:''}
-        <div style="font-size:13.5px;color:#e8e6e1;line-height:1.45;word-break:break-word">${esc(m.body)}</div>
+        ${senderHtml}${textHtml}${imgHtml}
       </div>
       <span style="font-size:10.5px;color:#5c626b;padding:0 4px;${m.mine?'text-align:right':''}">${time}</span>`;
     container.appendChild(div);
@@ -98,17 +125,40 @@ function renderMessages(msgs){
 
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
+function onChatImageSelected(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  _chatImageFile=file;
+  const url=URL.createObjectURL(file);
+  document.getElementById('chat-img-thumb').src=url;
+  document.getElementById('chat-img-preview').style.display='block';
+}
+
+function clearChatImage(){
+  _chatImageFile=null;
+  const input=document.getElementById('chat-file-input');
+  input.value='';
+  const thumb=document.getElementById('chat-img-thumb');
+  if(thumb.src.startsWith('blob:'))URL.revokeObjectURL(thumb.src);
+  thumb.src='';
+  document.getElementById('chat-img-preview').style.display='none';
+}
+
 async function sendChatMsg(e){
   e.preventDefault();
   const input=document.getElementById('chat-input');
-  const body=input.value.trim();
-  if(!body||!_chatSaleId)return;
+  const bodyText=input.value.trim();
+  if(!bodyText&&!_chatImageFile)return;
+  if(!_chatSaleId)return;
   input.value='';
+  const fd=new FormData();
+  if(bodyText)fd.append('body',bodyText);
+  if(_chatImageFile)fd.append('image',_chatImageFile);
+  clearChatImage();
   try{
     const r=await fetch(`/api/users/me/sales/${_chatSaleId}/messages`,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({body}),
+      body:fd,
       credentials:'include'
     });
     if(r.ok){

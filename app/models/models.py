@@ -158,6 +158,7 @@ class Message(Base):
     sale_id = Column(Integer, ForeignKey("sales.id", ondelete="CASCADE"), index=True)
     sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     body = Column(Text, nullable=False)
+    image_url = Column(String(500), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
     sale = relationship("Sale", back_populates="messages")

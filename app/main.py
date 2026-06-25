@@ -6,8 +6,17 @@ import os
 from .routers import auth, auctions, users, pages
 from .database import engine, Base
 from .models import models  # ensure models are registered
+from sqlalchemy import text
 
 Base.metadata.create_all(bind=engine)
+
+# Incremental schema migrations (no Alembic)
+with engine.connect() as _conn:
+    try:
+        _conn.execute(text("ALTER TABLE messages ADD COLUMN image_url VARCHAR(500) NULL"))
+        _conn.commit()
+    except Exception:
+        pass  # column already exists
 
 app = FastAPI(title="Rareza — Subastas de cartas", version="1.0.0")
 

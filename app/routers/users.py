@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
-import os, uuid
+from typing import Optional
+from PIL import Image, ImageOps
+import io, os, uuid
 
 from ..database import get_db
 from ..models.models import User, Store, Auction, Bid, Watched, Sale, Message
-from ..schemas.schemas import StoreUpdate, SaleStatusUpdate, UserUpdate, FacebookLink, MessageCreate
+from ..schemas.schemas import StoreUpdate, SaleStatusUpdate, UserUpdate, FacebookLink
 from ..deps import get_current_user
 from ..services.auction_service import fmt_price
 from ..config import get_settings
@@ -14,6 +16,21 @@ from ..config import get_settings
 router = APIRouter(prefix="/api/users", tags=["users"])
 settings = get_settings()
 UPLOAD_DIR = "app/uploads"
+
+_ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+
+def _save_chat_image(file: UploadFile) -> str:
+    if file.content_type not in _ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Formato de imagen no permitido")
+    data = file.file.read()
+    img = Image.open(io.BytesIO(data))
+    img = ImageOps.exif_transpose(img)
+    if img.mode not in ("RGB", "L"):
+        img = img.convert("RGB")
+    img.thumbnail((1200, 1200), Image.LANCZOS)
+    fname = f"chat_{uuid.uuid4().hex}.jpg"
+    img.save(os.path.join(UPLOAD_DIR, fname), "JPEG", quality=85, optimize=True)
+    return f"/uploads/{fname}"
 
 
 @router.get("/me")
@@ -223,6 +240,7 @@ def get_messages(
             "sender_id": m.sender_id,
             "sender_name": m.sender.display_name or m.sender.username,
             "body": m.body,
+            "image_url": m.image_url,
             "mine": m.sender_id == current_user.id,
             "created_at": m.created_at.isoformat(),
         }
@@ -231,17 +249,26 @@ def get_messages(
 
 
 @router.post("/me/sales/{sale_id}/messages")
-def send_message(
+async def send_message(
     sale_id: int,
-    data: MessageCreate,
+    body: Optional[str] = Form(None),
+    image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     sale = _get_sale_for_user(sale_id, current_user, db)
-    body = data.body.strip()
-    if not body:
+    text_body = (body or "").strip()
+    image_url = None
+    if image and image.filename:
+        image_url = _save_chat_image(image)
+    if not text_body and not image_url:
         raise HTTPException(status_code=400, detail="El mensaje no puede estar vacío")
-    msg = Message(sale_id=sale.id, sender_id=current_user.id, body=body)
+    msg = Message(
+        sale_id=sale.id,
+        sender_id=current_user.id,
+        body=text_body,
+        image_url=image_url,
+    )
     db.add(msg)
     db.commit()
     db.refresh(msg)
@@ -250,6 +277,7 @@ def send_message(
         "sender_id": msg.sender_id,
         "sender_name": current_user.display_name or current_user.username,
         "body": msg.body,
+        "image_url": msg.image_url,
         "mine": True,
         "created_at": msg.created_at.isoformat(),
     }

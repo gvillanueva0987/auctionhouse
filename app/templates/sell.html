@@ -161,9 +161,15 @@
     </div>
 
     {% if sales %}
-    <div style="display:flex;flex-direction:column;gap:11px">
+    <div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;background:#181c23;border:1px solid rgba(232,230,225,0.1);border-radius:11px;padding:0 8px 0 14px;height:43px;max-width:420px">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7a808a" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="sale-search" type="text" placeholder="Buscar por carta o comprador…" oninput="filterSales()" style="flex:1;background:none;border:none;outline:none;color:#e8e6e1;font-size:14px;font-family:'Hanken Grotesk',sans-serif">
+      </div>
+    </div>
+    <div id="sales-list" style="display:flex;flex-direction:column;gap:11px">
       {% for sale in sales %}
-      <div class="sale-row">
+      <div class="sale-row" data-title="{{ sale.auction.title | lower }}" data-buyer="{{ (sale.buyer.username if sale.buyer else '') | lower }}">
         <div class="sale-thumb" style="background:radial-gradient(120% 120% at 50% 0%,hsl({{ sale.auction.hue }} 36% 20%),hsl({{ (sale.auction.hue+20)%360 }} 30% 10%))"></div>
         <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:140px">
           <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9aa0a8">{{ sale.auction.game }} · {{ sale.auction.sale_type }}</span>
@@ -199,6 +205,7 @@
       </div>
       {% endfor %}
     </div>
+    <div id="no-results" style="display:none;text-align:center;padding:30px 20px;color:#6c727b;font-size:14px">Sin resultados para tu búsqueda</div>
     {% else %}
     <div style="display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:70px 20px;background:#14181f;border:1px dashed rgba(232,230,225,0.12);border-radius:16px">
       <span style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#e8e6e1">Sin ventas aún</span>
@@ -745,6 +752,19 @@ async function saveStore(e){
   const r=await fetch('/api/users/me/store',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),credentials:'include'});
   if(r.ok){showToast('Tienda guardada');}
   else{showToast('Error al guardar','error');}
+}
+
+function filterSales(){
+  const q=(document.getElementById('sale-search').value||'').toLowerCase().trim();
+  const rows=document.querySelectorAll('#sales-list .sale-row');
+  let visible=0;
+  rows.forEach(r=>{
+    const match=!q||r.dataset.title.includes(q)||r.dataset.buyer.includes(q);
+    r.style.display=match?'':'none';
+    if(match)visible++;
+  });
+  const nr=document.getElementById('no-results');
+  if(nr)nr.style.display=visible===0&&q?'block':'none';
 }
 
 function updateCharCount(el){
