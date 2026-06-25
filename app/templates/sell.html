@@ -944,13 +944,13 @@ function generateLabels(){
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#111;background:#fff;padding:3mm}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5mm}
-.label{display:flex;border:0.5pt solid #888;height:27mm;overflow:hidden;break-inside:avoid;page-break-inside:avoid}
-.half{flex:1;padding:1.5mm 2.5mm;display:flex;flex-direction:column;gap:0.4mm;overflow:hidden}
-.sep{width:0.5pt;background:#ccc;flex:none;margin:2mm 0}
-.badge{font-size:5pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#666;border-bottom:0.3pt solid #ddd;padding-bottom:0.8mm;margin-bottom:0.5mm}
-.lname{font-size:8pt;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lline{font-size:6pt;color:#333;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:2mm}
+.label{display:flex;border:0.5pt solid #888;height:30mm;overflow:hidden;break-inside:avoid;page-break-inside:avoid}
+.half{flex:1;padding:2mm 3mm;display:flex;flex-direction:column;gap:0.6mm;overflow:hidden}
+.sep{width:0.5pt;background:#ccc;flex:none;margin:2.5mm 0}
+.badge{font-size:6pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#666;border-bottom:0.3pt solid #ddd;padding-bottom:1mm;margin-bottom:0.8mm}
+.lname{font-size:9.5pt;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lline{font-size:7pt;color:#333;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media print{@page{size:A4 portrait;margin:4mm}body{padding:0;background:#fff}}
 </style></head>
 <body><div class="grid">${labels}</div>
