@@ -153,9 +153,15 @@
   {% elif tab == 'historial' %}
   <!-- Historial -->
   <main style="max-width:1300px;margin:0 auto;padding:30px 28px 60px">
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:22px">
-      <h1 style="margin:0;font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;color:#f4f2ec;letter-spacing:-0.01em">Historial de ventas</h1>
-      <p style="margin:0;font-size:15px;color:#9aa0a8;max-width:640px">Todas tus subastas finalizadas y ventas directas.</p>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <h1 style="margin:0;font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;color:#f4f2ec;letter-spacing:-0.01em">Historial de ventas</h1>
+        <p style="margin:0;font-size:15px;color:#9aa0a8;max-width:640px">Todas tus subastas finalizadas y ventas directas.</p>
+      </div>
+      <button onclick="generateLabels()" class="btn-outline" style="height:40px;font-size:13px;flex:none;margin-top:4px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Etiquetas PDF
+      </button>
     </div>
 
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px">
@@ -195,7 +201,20 @@
     </div>
     <div id="sales-list" style="display:flex;flex-direction:column;gap:11px">
       {% for sale in sales %}
-      <div class="sale-row" data-title="{{ sale.auction.title | lower }}" data-buyer="{{ (sale.buyer.username if sale.buyer else '') | lower }}" data-status="{{ sale.status }}" data-date="{{ sale.sale_date.isoformat() if sale.sale_date else '' }}" data-price="{{ sale.final_price }}">
+      <div class="sale-row"
+        data-title="{{ sale.auction.title | lower }}"
+        data-buyer="{{ (sale.buyer.username if sale.buyer else '') | lower }}"
+        data-status="{{ sale.status }}"
+        data-date="{{ sale.sale_date.isoformat() if sale.sale_date else '' }}"
+        data-price="{{ sale.final_price }}"
+        data-buyer-id="{{ sale.buyer.id if sale.buyer else '' }}"
+        data-buyer-name="{{ (sale.buyer.display_name or sale.buyer.username) | e if sale.buyer else '' }}"
+        data-buyer-street="{{ sale.buyer.shipping_street | e if sale.buyer and sale.buyer.shipping_street else '' }}"
+        data-buyer-colony="{{ sale.buyer.shipping_colony | e if sale.buyer and sale.buyer.shipping_colony else '' }}"
+        data-buyer-state="{{ sale.buyer.shipping_state | e if sale.buyer and sale.buyer.shipping_state else '' }}"
+        data-buyer-city="{{ sale.buyer.shipping_city | e if sale.buyer and sale.buyer.shipping_city else '' }}"
+        data-buyer-postal="{{ sale.buyer.shipping_postal | e if sale.buyer and sale.buyer.shipping_postal else '' }}"
+        data-buyer-phone="{{ sale.buyer.phone | e if sale.buyer and sale.buyer.phone else '' }}">
         <div class="sale-thumb" style="background:radial-gradient(120% 120% at 50% 0%,hsl({{ sale.auction.hue }} 36% 20%),hsl({{ (sale.auction.hue+20)%360 }} 30% 10%))"></div>
         <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:140px">
           <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9aa0a8">{{ sale.auction.game }} · {{ sale.auction.sale_type }}</span>
@@ -874,7 +893,73 @@ async function saveStore(e){
 }
 
 const _currency='{{ currency }}';
+const _storeInfo={
+  name:{{ ((store.name if store else None) or current_user.display_name or current_user.username)|tojson }},
+  street:{{ (current_user.shipping_street or '')|tojson }},
+  colony:{{ (current_user.shipping_colony or '')|tojson }},
+  state:{{ (current_user.shipping_state or '')|tojson }},
+  city:{{ (current_user.shipping_city or '')|tojson }},
+  postal:{{ (current_user.shipping_postal or '')|tojson }},
+  phone:{{ (current_user.phone or '')|tojson }},
+};
 let _statusFilter='';
+
+function generateLabels(){
+  const seen=new Set();
+  const buyers=[];
+  document.querySelectorAll('#sales-list .sale-row').forEach(r=>{
+    if(r.style.display==='none')return;
+    const id=r.dataset.buyerId;
+    if(!id||seen.has(id))return;
+    seen.add(id);
+    buyers.push({
+      name:r.dataset.buyerName||r.dataset.buyer||'—',
+      street:r.dataset.buyerStreet||'',
+      colony:r.dataset.buyerColony||'',
+      state:r.dataset.buyerState||'',
+      city:r.dataset.buyerCity||'',
+      postal:r.dataset.buyerPostal||'',
+      phone:r.dataset.buyerPhone||'',
+    });
+  });
+  if(!buyers.length){showToast('No hay compradores en los resultados actuales','error');return;}
+  function h(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+  function line(...parts){return parts.filter(Boolean).join(', ')||'—';}
+  function block(badge,name,street,colony,state,city,postal,phone){
+    return `<div class="half">
+      <div class="badge">${badge}</div>
+      <div class="lname">${h(name)}</div>
+      <div class="lline">${h(line(street,colony))}</div>
+      <div class="lline">${h(line(state,city))}</div>
+      <div class="lline">CP: ${h(postal||'—')}</div>
+      <div class="lline">${h(phone||'—')}</div>
+    </div>`;}
+  const labels=buyers.map(b=>`<div class="label">
+    ${block('REMITENTE',_storeInfo.name,_storeInfo.street,_storeInfo.colony,_storeInfo.state,_storeInfo.city,_storeInfo.postal,_storeInfo.phone)}
+    <div class="sep"></div>
+    ${block('DESTINATARIO',b.name,b.street,b.colony,b.state,b.city,b.postal,b.phone)}
+  </div>`).join('');
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<title>Etiquetas de envío</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#111;background:#fff}
+.label{display:flex;border:2px solid #111;width:190mm;min-height:90mm;margin:0 auto 8mm;page-break-after:always;break-after:page}
+.label:last-child{page-break-after:avoid;break-after:avoid}
+.half{flex:1;padding:10mm 12mm;display:flex;flex-direction:column;gap:3mm}
+.sep{width:1px;background:#bbb;flex:none;margin:8mm 0}
+.badge{font-size:7pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#666;padding-bottom:3mm;border-bottom:1px solid #ccc}
+.lname{font-size:14pt;font-weight:700;line-height:1.2}
+.lline{font-size:10pt;color:#222;line-height:1.55}
+@media print{@page{size:A4;margin:10mm}body{background:#fff}}
+</style></head>
+<body>${labels}</body></html>`;
+  const win=window.open('','_blank','width=900,height=700');
+  if(!win){showToast('Permite ventanas emergentes para generar el PDF','error');return;}
+  win.document.write(html);
+  win.document.close();
+  win.addEventListener('load',()=>win.print());
+}
 
 function setStatusFilter(btn,status){
   _statusFilter=status;
