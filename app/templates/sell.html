@@ -935,25 +935,25 @@ function generateLabels(){
       <div class="lline">${h(phone||'—')}</div>
     </div>`;}
   const labels=buyers.map(b=>`<div class="label">
-    ${block('REMITENTE',_storeInfo.name,_storeInfo.street,_storeInfo.colony,_storeInfo.state,_storeInfo.city,_storeInfo.postal,_storeInfo.phone)}
+    ${block('DE',_storeInfo.name,_storeInfo.street,_storeInfo.colony,_storeInfo.state,_storeInfo.city,_storeInfo.postal,_storeInfo.phone)}
     <div class="sep"></div>
-    ${block('DESTINATARIO',b.name,b.street,b.colony,b.state,b.city,b.postal,b.phone)}
+    ${block('PARA',b.name,b.street,b.colony,b.state,b.city,b.postal,b.phone)}
   </div>`).join('');
   const html=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <title>Etiquetas de envío</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#111;background:#fff}
-.label{display:flex;border:2px solid #111;width:190mm;min-height:90mm;margin:0 auto 8mm;page-break-after:always;break-after:page}
-.label:last-child{page-break-after:avoid;break-after:avoid}
-.half{flex:1;padding:10mm 12mm;display:flex;flex-direction:column;gap:3mm}
-.sep{width:1px;background:#bbb;flex:none;margin:8mm 0}
-.badge{font-size:7pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#666;padding-bottom:3mm;border-bottom:1px solid #ccc}
-.lname{font-size:14pt;font-weight:700;line-height:1.2}
-.lline{font-size:10pt;color:#222;line-height:1.55}
-@media print{@page{size:A4;margin:10mm}body{background:#fff}}
+body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#111;background:#fff;padding:3mm}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5mm}
+.label{display:flex;border:0.5pt solid #888;height:27mm;overflow:hidden;break-inside:avoid;page-break-inside:avoid}
+.half{flex:1;padding:1.5mm 2.5mm;display:flex;flex-direction:column;gap:0.4mm;overflow:hidden}
+.sep{width:0.5pt;background:#ccc;flex:none;margin:2mm 0}
+.badge{font-size:5pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#666;border-bottom:0.3pt solid #ddd;padding-bottom:0.8mm;margin-bottom:0.5mm}
+.lname{font-size:8pt;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lline{font-size:6pt;color:#333;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media print{@page{size:A4 portrait;margin:4mm}body{padding:0;background:#fff}}
 </style></head>
-<body>${labels}</body></html>`;
+<body><div class="grid">${labels}</div></body></html>`;
   const win=window.open('','_blank','width=900,height=700');
   if(!win){showToast('Permite ventanas emergentes para generar el PDF','error');return;}
   win.document.write(html);
