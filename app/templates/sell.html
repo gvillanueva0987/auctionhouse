@@ -187,17 +187,20 @@
         <select class="status-select" data-s="{{ sale.status }}" data-sale-id="{{ sale.id }}" onchange="updateSaleStatus(this)">
           <option value="pago"{% if sale.status == 'pago' %} selected{% endif %}>Pendiente de pago</option>
           <option value="envio"{% if sale.status == 'envio' %} selected{% endif %}>Pendiente de envío</option>
-          <option value="enviado"{% if sale.status == 'enviado' %} selected{% endif %}>Enviado</option>
+          <option value="enviado"{% if sale.status == 'enviado' %} selected{% endif %}>Enviado/Entregado</option>
         </select>
-        <div class="tracking-wrap" style="display:{% if sale.status == 'enviado' %}flex{% else %}none{% endif %};align-items:center;gap:6px;flex:none">
-          <input type="text" class="tracking-input" placeholder="N° de rastreo…" value="{{ sale.tracking or '' }}"{% if sale.tracking %} readonly{% endif %}
-            onkeydown="if(event.key==='Enter'){event.preventDefault();saveTracking(this)}"
-            onblur="saveTracking(this)">
-          {% if sale.tracking %}
-          <button type="button" class="tracking-edit-btn" onclick="editTracking(this)" title="Editar número de rastreo" style="width:32px;height:32px;border-radius:8px;border:1px solid rgba(232,230,225,0.12);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa0a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          {% endif %}
+        <div class="tracking-wrap" style="display:{% if sale.status == 'enviado' %}flex{% else %}none{% endif %};flex-direction:column;gap:4px;flex:none">
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="text" class="tracking-input" placeholder="N° de rastreo…" value="{{ sale.tracking or '' }}"{% if sale.tracking %} readonly{% endif %}
+              onkeydown="if(event.key==='Enter'){event.preventDefault();saveTracking(this)}"
+              onblur="saveTracking(this)">
+            {% if sale.tracking %}
+            <button type="button" class="tracking-edit-btn" onclick="editTracking(this)" title="Editar número de rastreo" style="width:32px;height:32px;border-radius:8px;border:1px solid rgba(232,230,225,0.12);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa0a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            {% endif %}
+          </div>
+          <small class="tracking-date-label" style="font-size:11px;color:#6c727b;display:{% if sale.shipped_at %}block{% else %}none{% endif %}">{% if sale.shipped_at %}El día: {{ sale.shipped_at.strftime('%d/%m/%Y') }}{% endif %}</small>
         </div>
         <button onclick="openChat({{ sale.id }},'{{ sale.auction.title | e }}','{{ sale.buyer.username | e }}')" title="Chatear con {{ sale.buyer.username }}" style="width:40px;height:40px;border-radius:10px;border:1px solid rgba(200,162,74,0.3);background:rgba(200,162,74,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:border-color .15s,background .15s" onmouseenter="this.style.borderColor='rgba(200,162,74,0.6)';this.style.background='rgba(200,162,74,0.16)'" onmouseleave="this.style.borderColor='rgba(200,162,74,0.3)';this.style.background='rgba(200,162,74,0.08)'">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a24a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -702,8 +705,14 @@ async function updateSaleStatus(sel){
   try{
     const r=await fetch(`/api/users/me/sales/${saleId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status}),credentials:'include'});
     if(r.ok){
+      const data=await r.json();
       sel.dataset.s=status;
       trackingWrap.style.display=status==='enviado'?'flex':'none';
+      if(status==='enviado'&&data.shipped_at){
+        const lbl=trackingWrap.querySelector('.tracking-date-label');
+        lbl.textContent='El día: '+data.shipped_at;
+        lbl.style.display='block';
+      }
     }else{
       sel.value=sel.dataset.s;
     }
@@ -730,7 +739,7 @@ async function saveTracking(input){
         btn.style.cssText='width:32px;height:32px;border-radius:8px;border:1px solid rgba(232,230,225,0.12);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none';
         btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa0a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
         btn.onclick=()=>editTracking(btn);
-        wrap.appendChild(btn);
+        wrap.querySelector('div').appendChild(btn);
       }
       btn.style.display='flex';
     }

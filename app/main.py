@@ -12,11 +12,15 @@ Base.metadata.create_all(bind=engine)
 
 # Incremental schema migrations (no Alembic)
 with engine.connect() as _conn:
-    try:
-        _conn.execute(text("ALTER TABLE messages ADD COLUMN image_url VARCHAR(500) NULL"))
-        _conn.commit()
-    except Exception:
-        pass  # column already exists
+    for _sql in [
+        "ALTER TABLE messages ADD COLUMN image_url VARCHAR(500) NULL",
+        "ALTER TABLE sales ADD COLUMN shipped_at DATETIME NULL",
+    ]:
+        try:
+            _conn.execute(text(_sql))
+            _conn.commit()
+        except Exception:
+            pass  # column already exists
 
 app = FastAPI(title="Rareza — Subastas de cartas", version="1.0.0")
 

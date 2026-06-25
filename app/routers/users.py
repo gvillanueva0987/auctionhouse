@@ -207,10 +207,15 @@ def update_sale_status(
     if not sale:
         raise HTTPException(status_code=404)
     sale.status = data.status
+    if data.status == "enviado" and sale.shipped_at is None:
+        sale.shipped_at = datetime.now()
     if data.tracking:
         sale.tracking = data.tracking
     db.commit()
-    return JSONResponse({"ok": True})
+    return JSONResponse({
+        "ok": True,
+        "shipped_at": sale.shipped_at.strftime("%d/%m/%Y") if sale.shipped_at else None,
+    })
 
 
 def _get_sale_for_user(sale_id: int, user: User, db: Session) -> Sale:

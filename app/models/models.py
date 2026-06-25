@@ -142,6 +142,7 @@ class Sale(Base):
     final_price = Column(DECIMAL(10, 2), nullable=False)
     status = Column(Enum("pago", "envio", "enviado"), default="pago")
     tracking = Column(String(100))
+    shipped_at = Column(DateTime, nullable=True)
     sale_date = Column(Date, server_default=func.current_date())
     created_at = Column(DateTime, server_default=func.now())
 
