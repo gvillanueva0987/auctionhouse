@@ -285,10 +285,14 @@
         </span>
         <input type="file" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0" onchange="uploadLogo(this)">
       </label>
-      <div>
+      <div style="flex:1">
         <h1 style="margin:0;font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:#f4f2ec">Mi tienda</h1>
         <p style="margin:4px 0 0;font-size:14px;color:#9aa0a8">Así te verán los compradores en cada subasta</p>
       </div>
+      <button type="button" id="copy-link-btn" onclick="copyStoreLink()" style="display:flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:10px;border:1px solid rgba(200,162,74,0.35);background:rgba(200,162,74,0.08);color:#c8a24a;font-size:13px;font-weight:600;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;flex:none;transition:border-color .15s,background .15s" onmouseenter="this.style.borderColor='rgba(200,162,74,0.6)';this.style.background='rgba(200,162,74,0.16)'" onmouseleave="this.style.borderColor='rgba(200,162,74,0.35)';this.style.background='rgba(200,162,74,0.08)'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Copiar enlace
+      </button>
     </div>
 
     <form id="store-form" onsubmit="saveStore(event)" style="display:flex;flex-direction:column;gap:20px">
@@ -846,6 +850,19 @@ function toggleCost(key, checked){
   if(!el)return;
   el.style.opacity=checked?'1':'0.35';
   el.style.pointerEvents=checked?'':'none';
+}
+
+function copyStoreLink(){
+  const url=location.origin+'/seller/{{ current_user.id }}';
+  navigator.clipboard.writeText(url).then(()=>{
+    const btn=document.getElementById('copy-link-btn');
+    const orig=btn.innerHTML;
+    btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> ¡Copiado!';
+    btn.style.borderColor='rgba(111,224,163,0.5)';
+    btn.style.background='rgba(111,224,163,0.1)';
+    btn.style.color='#6fe0a3';
+    setTimeout(()=>{btn.innerHTML=orig;btn.style.borderColor='rgba(200,162,74,0.35)';btn.style.background='rgba(200,162,74,0.08)';btn.style.color='#c8a24a';},2000);
+  }).catch(()=>showToast('No se pudo copiar el enlace','error'));
 }
 
 async function uploadLogo(input){
