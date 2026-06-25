@@ -953,12 +953,13 @@ body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#111;backgrou
 .lline{font-size:6pt;color:#333;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media print{@page{size:A4 portrait;margin:4mm}body{padding:0;background:#fff}}
 </style></head>
-<body><div class="grid">${labels}</div></body></html>`;
+<body><div class="grid">${labels}</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
   const win=window.open('','_blank','width=900,height=700');
   if(!win){showToast('Permite ventanas emergentes para generar el PDF','error');return;}
   win.document.write(html);
   win.document.close();
-  win.addEventListener('load',()=>win.print());
 }
 
 function setStatusFilter(btn,status){
