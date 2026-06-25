@@ -27,6 +27,11 @@
 .tracking-input{background:#0f1115;border:1px solid rgba(232,230,225,0.12);border-radius:9px;color:#e8e6e1;font-size:13px;font-family:'Hanken Grotesk',sans-serif;padding:6px 10px;outline:none;width:150px;transition:border-color .15s}
 .tracking-input:focus{border-color:rgba(200,162,74,0.4)}
 .tracking-input[readonly]{color:#9aa0a8;cursor:default;background:#12161d;border-color:rgba(232,230,225,0.07)}
+.filter-pill{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:5px 13px;border-radius:999px;cursor:pointer;border:1px solid rgba(232,230,225,0.14);background:none;color:#9aa0a8;font-family:'Hanken Grotesk',sans-serif;transition:all .15s;white-space:nowrap}
+.filter-pill:hover{border-color:rgba(232,230,225,0.28);color:#e8e6e1}
+.filter-pill.active{border-color:rgba(200,162,74,0.35);background:rgba(200,162,74,0.12);color:#e6c878}
+.date-filter{background:#181c23;border:1px solid rgba(232,230,225,0.1);border-radius:9px;color:#e8e6e1;font-size:13px;font-family:'Hanken Grotesk',sans-serif;padding:0 11px;height:40px;outline:none;cursor:pointer;color-scheme:dark;transition:border-color .15s}
+.date-filter:focus{border-color:rgba(200,162,74,0.4)}
 .ac-dropdown{display:none;position:fixed;z-index:500;background:#1a1f28;border:1px solid rgba(232,230,225,0.14);border-radius:10px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,0.55);max-height:260px;overflow-y:auto}
 .ac-item{padding:9px 13px;cursor:pointer;font-size:13px;color:#e8e6e1;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid rgba(232,230,225,0.06)}
 .ac-item:last-child{border-bottom:none}
@@ -155,25 +160,42 @@
 
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px">
       <div style="min-width:120px;background:#14181f;border:1px solid rgba(232,230,225,0.08);border-radius:13px;padding:13px 16px">
-        <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:#e8e6e1">{{ sales|length }}</div>
+        <div id="stat-count" style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:#e8e6e1">{{ sales|length }}</div>
         <div style="font-size:12px;color:#9aa0a8;margin-top:2px">Ventas totales</div>
       </div>
       <div style="min-width:120px;background:#14181f;border:1px solid rgba(232,230,225,0.08);border-radius:13px;padding:13px 16px">
-        <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:#e6c878">{{ revenue }}</div>
+        <div id="stat-revenue" style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:#e6c878">{{ revenue }}</div>
         <div style="font-size:12px;color:#9aa0a8;margin-top:2px">Ingresos</div>
       </div>
     </div>
 
     {% if sales %}
-    <div style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:10px;background:#181c23;border:1px solid rgba(232,230,225,0.1);border-radius:11px;padding:0 8px 0 14px;height:43px;max-width:420px">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7a808a" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input id="sale-search" type="text" placeholder="Buscar por carta o comprador…" oninput="filterSales()" style="flex:1;background:none;border:none;outline:none;color:#e8e6e1;font-size:14px;font-family:'Hanken Grotesk',sans-serif">
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      <!-- Status pills -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="filter-pill active" onclick="setStatusFilter(this,'')">Todos</button>
+        <button class="filter-pill" onclick="setStatusFilter(this,'pago')">Pendiente de pago</button>
+        <button class="filter-pill" onclick="setStatusFilter(this,'envio')">Pendiente de envío</button>
+        <button class="filter-pill" onclick="setStatusFilter(this,'enviado')">Enviado/Entregado</button>
+      </div>
+      <!-- Search + date range -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div style="display:flex;align-items:center;gap:10px;background:#181c23;border:1px solid rgba(232,230,225,0.1);border-radius:11px;padding:0 8px 0 14px;height:40px;min-width:240px;flex:1;max-width:360px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7a808a" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input id="sale-search" type="text" placeholder="Buscar por carta o comprador…" oninput="filterSales()" style="flex:1;background:none;border:none;outline:none;color:#e8e6e1;font-size:13px;font-family:'Hanken Grotesk',sans-serif">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:12px;color:#6c727b;white-space:nowrap">Desde</span>
+          <input type="date" id="filter-from" class="date-filter" onchange="filterSales()">
+          <span style="font-size:12px;color:#6c727b;white-space:nowrap">Hasta</span>
+          <input type="date" id="filter-to" class="date-filter" onchange="filterSales()">
+          <button id="clear-dates-btn" onclick="clearDateFilters()" style="display:none;height:32px;padding:0 12px;border-radius:8px;border:1px solid rgba(232,230,225,0.12);background:transparent;color:#9aa0a8;font-size:12px;font-family:'Hanken Grotesk',sans-serif;cursor:pointer">Limpiar</button>
+        </div>
       </div>
     </div>
     <div id="sales-list" style="display:flex;flex-direction:column;gap:11px">
       {% for sale in sales %}
-      <div class="sale-row" data-title="{{ sale.auction.title | lower }}" data-buyer="{{ (sale.buyer.username if sale.buyer else '') | lower }}">
+      <div class="sale-row" data-title="{{ sale.auction.title | lower }}" data-buyer="{{ (sale.buyer.username if sale.buyer else '') | lower }}" data-status="{{ sale.status }}" data-date="{{ sale.sale_date.isoformat() if sale.sale_date else '' }}" data-price="{{ sale.final_price }}">
         <div class="sale-thumb" style="background:radial-gradient(120% 120% at 50% 0%,hsl({{ sale.auction.hue }} 36% 20%),hsl({{ (sale.auction.hue+20)%360 }} 30% 10%))"></div>
         <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:140px">
           <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9aa0a8">{{ sale.auction.game }} · {{ sale.auction.sale_type }}</span>
@@ -810,17 +832,45 @@ async function saveStore(e){
   else{showToast('Error al guardar','error');}
 }
 
+const _currency='{{ currency }}';
+let _statusFilter='';
+
+function setStatusFilter(btn,status){
+  _statusFilter=status;
+  document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filterSales();
+}
+
+function clearDateFilters(){
+  document.getElementById('filter-from').value='';
+  document.getElementById('filter-to').value='';
+  document.getElementById('clear-dates-btn').style.display='none';
+  filterSales();
+}
+
 function filterSales(){
   const q=(document.getElementById('sale-search').value||'').toLowerCase().trim();
+  const fromVal=document.getElementById('filter-from').value;
+  const toVal=document.getElementById('filter-to').value;
+  document.getElementById('clear-dates-btn').style.display=(fromVal||toVal)?'':'none';
   const rows=document.querySelectorAll('#sales-list .sale-row');
-  let visible=0;
+  let visible=0,totalPrice=0;
   rows.forEach(r=>{
-    const match=!q||r.dataset.title.includes(q)||r.dataset.buyer.includes(q);
+    const textMatch=!q||r.dataset.title.includes(q)||r.dataset.buyer.includes(q);
+    const statusMatch=!_statusFilter||r.dataset.status===_statusFilter;
+    const d=r.dataset.date;
+    const fromMatch=!fromVal||d>=fromVal;
+    const toMatch=!toVal||d<=toVal;
+    const match=textMatch&&statusMatch&&fromMatch&&toMatch;
     r.style.display=match?'':'none';
-    if(match)visible++;
+    if(match){visible++;totalPrice+=parseFloat(r.dataset.price)||0;}
   });
+  const anyFilter=q||_statusFilter||fromVal||toVal;
   const nr=document.getElementById('no-results');
-  if(nr)nr.style.display=visible===0&&q?'block':'none';
+  if(nr)nr.style.display=(visible===0&&anyFilter)?'block':'none';
+  document.getElementById('stat-count').textContent=visible;
+  document.getElementById('stat-revenue').textContent=_currency+' '+Math.round(totalPrice).toLocaleString('en-US');
 }
 
 function updateCharCount(el){
