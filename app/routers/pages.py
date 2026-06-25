@@ -380,13 +380,16 @@ def sell_page(
         .order_by(Sale.created_at.desc())
         .all()
     )
-    revenue = sum(float(s.final_price) for s in sales)
+    enviado_sales = [s for s in sales if s.status == "enviado"]
+    enviado_count = len(enviado_sales)
+    revenue = sum(float(s.final_price) for s in enviado_sales)
 
     ctx = _common(request, user)
     ctx.update({
         "tab": tab,
         "store": store,
         "sales": sales,
+        "enviado_count": enviado_count,
         "revenue": fmt_price(revenue, settings.CURRENCY),
         "fmt_price": fmt_price,
     })
