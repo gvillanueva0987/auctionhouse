@@ -301,67 +301,62 @@ def search(
 @router.get("/dashboard", response_class=HTMLResponse)
 def dashboard(
     request: Request,
-    tab: str = "pujas",
+    tab: str = "curso",
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     watched = _watched_ids(user, db)
 
-    # My latest bid per auction
-    my_bids_raw = (
+    # Tab 1: active auctions the user bid on OR is watching, deduplicated
+    active_map: dict = {}
+    for b in (
         db.query(Bid)
         .options(joinedload(Bid.auction).joinedload(Auction.seller))
         .filter(Bid.bidder_id == user.id)
         .order_by(Bid.created_at.desc())
         .all()
-    )
-    seen_auctions = {}
-    for b in my_bids_raw:
-        if b.auction_id not in seen_auctions:
-            seen_auctions[b.auction_id] = b
-    my_bids = list(seen_auctions.values())
+    ):
+        if b.auction and b.auction.status == "active" and b.auction_id not in active_map:
+            active_map[b.auction_id] = b.auction
 
-    my_watched = (
+    for w in (
         db.query(Watched)
         .options(joinedload(Watched.auction).joinedload(Auction.seller))
         .filter(Watched.user_id == user.id)
         .all()
-    )
-    watched_cards = [auction_to_card(w.auction, watched, settings.CURRENCY) for w in my_watched]
+    ):
+        if w.auction and w.auction.status == "active" and w.auction_id not in active_map:
+            active_map[w.auction_id] = w.auction
 
+    active_cards = [auction_to_card(a, watched, settings.CURRENCY) for a in active_map.values()]
+
+    # Tab 2: won, not yet received
     won = (
         db.query(Sale)
         .options(joinedload(Sale.auction), joinedload(Sale.seller))
-        .filter(Sale.buyer_id == user.id)
+        .filter(Sale.buyer_id == user.id, Sale.received_at == None)
         .order_by(Sale.created_at.desc())
         .all()
     )
 
-    bid_items = []
-    for b in my_bids:
-        a = b.auction
-        if not a:
-            continue
-        cd = fmt_countdown(a.ends_at)
-        is_winning = float(a.current_bid) == float(b.amount)
-        bid_items.append({
-            "auction": a,
-            "my_amount": fmt_price(b.amount, settings.CURRENCY),
-            "current": fmt_price(a.current_bid, settings.CURRENCY),
-            "ends_text": cd["text"],
-            "is_winning": is_winning,
-            "hue": a.hue,
-        })
+    # Tab 3: received (purchase history)
+    history = (
+        db.query(Sale)
+        .options(joinedload(Sale.auction), joinedload(Sale.seller))
+        .filter(Sale.buyer_id == user.id, Sale.received_at != None)
+        .order_by(Sale.received_at.desc())
+        .all()
+    )
 
     ctx = _common(request, user)
     ctx.update({
         "tab": tab,
-        "bid_items": bid_items,
-        "watched_cards": watched_cards,
+        "active_cards": active_cards,
         "won": won,
-        "active_bids_count": len(bid_items),
-        "watched_count": len(my_watched),
+        "history": history,
+        "active_count": len(active_cards),
         "won_count": len(won),
+        "history_count": len(history),
         "fmt_price": fmt_price,
         "time_ago": time_ago,
         "facebook_app_id": settings.FACEBOOK_APP_ID,

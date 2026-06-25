@@ -238,6 +238,21 @@ def update_sale_status(
     })
 
 
+@router.post("/me/sales/{sale_id}/received")
+def mark_received(
+    sale_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    sale = db.query(Sale).filter(Sale.id == sale_id, Sale.buyer_id == current_user.id).first()
+    if not sale:
+        raise HTTPException(status_code=404)
+    if sale.received_at is None:
+        sale.received_at = datetime.now()
+        db.commit()
+    return JSONResponse({"ok": True})
+
+
 def _get_sale_for_user(sale_id: int, user: User, db: Session) -> Sale:
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if not sale or (sale.seller_id != user.id and sale.buyer_id != user.id):
