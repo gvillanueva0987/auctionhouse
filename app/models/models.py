@@ -19,6 +19,7 @@ class User(Base):
     location = Column(String(100), default="Argentina")
     phone = Column(String(30))
     shipping_street = Column(String(255))
+    shipping_colony = Column(String(100))
     shipping_city = Column(String(100))
     shipping_state = Column(String(100))
     shipping_postal = Column(String(20))

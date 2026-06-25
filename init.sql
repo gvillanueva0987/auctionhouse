@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     location VARCHAR(100) DEFAULT 'Argentina',
     phone VARCHAR(30) DEFAULT NULL,
     shipping_street VARCHAR(255) DEFAULT NULL,
+    shipping_colony VARCHAR(100) DEFAULT NULL,
     shipping_city VARCHAR(100) DEFAULT NULL,
     shipping_state VARCHAR(100) DEFAULT NULL,
     shipping_postal VARCHAR(20) DEFAULT NULL,
